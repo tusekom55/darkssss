@@ -1199,7 +1199,7 @@
                         <button type="button" class="btn-secondary" onclick="previewProfit()">
                             <i class="fas fa-eye"></i> Hesapla
                         </button>
-                        <button type="button" class="btn-warning" onclick="loadUsers()">
+                        <button type="button" class="btn-warning" onclick="loadUsersForDropdown()">
                             <i class="fas fa-refresh"></i> Kullanıcıları Yenile
                         </button>
                     </div>
@@ -1500,7 +1500,7 @@
                     break;
                 case 'leverage':
                     loadLeveragePositions();
-                    loadUsers(); // Kullanıcıları da yükle
+                    loadUsersForDropdown(); // Dropdown için kullanıcıları yükle
                     break;
                 case 'settings':
                     loadSettings();
@@ -2848,8 +2848,8 @@
             document.getElementById('totalInvestedAmount').textContent = '₺' + totalInvested.toLocaleString('tr-TR');
         }
         
-        // Kullanıcıları yükle ve dropdown'a ekle
-        async function loadUsers() {
+        // Kullanıcıları dropdown'a yükle (leverage için)
+        async function loadUsersForDropdown() {
             try {
                 const response = await fetch('backend/admin/users.php?action=list', {
                     method: 'GET',
@@ -2858,6 +2858,8 @@
                 
                 const data = await response.json();
                 const dropdown = document.getElementById('targetUser');
+                if (!dropdown) return; // dropdown yoksa çık
+                
                 dropdown.innerHTML = '<option value="">Kullanıcı Seçin</option>';
                 
                 if (data.success && data.data) {
@@ -2869,13 +2871,13 @@
                         option.dataset.username = user.username;
                         dropdown.appendChild(option);
                     });
-                    showNotification('Kullanıcılar yüklendi', 'success');
+                    showNotification('Kullanıcılar dropdown\'a yüklendi', 'success');
                 } else {
-                    showNotification('Kullanıcılar yüklenemedi', 'error');
+                    showNotification('Kullanıcılar dropdown\'a yüklenemedi', 'error');
                 }
             } catch (error) {
-                console.error('Error loading users:', error);
-                showNotification('Kullanıcılar yüklenirken hata oluştu', 'error');
+                console.error('Error loading users for dropdown:', error);
+                showNotification('Kullanıcılar dropdown\'a yüklenirken hata oluştu', 'error');
             }
         }
         
