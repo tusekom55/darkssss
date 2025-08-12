@@ -73,7 +73,22 @@
     </div>
 
     <div class="test-section">
-        <h3>3. Oluşturulan Faturalar</h3>
+        <h3>3. Sadece Beklemede Olan Talepler</h3>
+        <button onclick="listPendingOnly()">Beklemede Olan Talepleri Göster</button>
+        <div id="pending-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Test Talebi Oluştur</h3>
+        <input type="number" id="test-user-id" placeholder="Kullanıcı ID" value="1">
+        <input type="number" id="test-amount" placeholder="Tutar" value="500">
+        <input type="text" id="test-method" placeholder="Yöntem" value="havale">
+        <button onclick="createTestRequest()">Test Talebi Oluştur</button>
+        <div id="test-create-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>5. Oluşturulan Faturalar</h3>
         <button onclick="listInvoices()">Faturaları Listele</button>
         <div id="invoices-result" class="result"></div>
     </div>
@@ -134,6 +149,65 @@
             }
         }
 
+        async function listPendingOnly() {
+            const resultDiv = document.getElementById('pending-result');
+            resultDiv.textContent = 'Beklemede olan talepler yükleniyor...';
+            
+            try {
+                const response = await fetch('backend/admin/withdrawals.php?action=pending_only');
+                const data = await response.json();
+                
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                resultDiv.className = data.success ? 'result success' : 'result error';
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function createTestRequest() {
+            const userId = document.getElementById('test-user-id').value;
+            const amount = document.getElementById('test-amount').value;
+            const method = document.getElementById('test-method').value;
+            const resultDiv = document.getElementById('test-create-result');
+            
+            if (!userId || !amount) {
+                resultDiv.textContent = 'Lütfen kullanıcı ID ve tutar girin';
+                resultDiv.className = 'result error';
+                return;
+            }
+            
+            resultDiv.textContent = 'Test talebi oluşturuluyor...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('action', 'create_test_request');
+                formData.append('user_id', userId);
+                formData.append('tutar', amount);
+                formData.append('yontem', method);
+                
+                const response = await fetch('backend/admin/withdrawals.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+                resultDiv.className = data.success ? 'result success' : 'result error';
+                
+                if (data.success) {
+                    // Otomatik olarak beklemede olan talepleri de yükle
+                    setTimeout(listPendingOnly, 1000);
+                    // Withdrawal ID'yi onay bölümüne otomatik olarak koy
+                    document.getElementById('withdrawal-id').value = data.withdrawal_id;
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+                resultDiv.className = 'result error';
+            }
+        }
+
         async function listInvoices() {
             const resultDiv = document.getElementById('invoices-result');
             resultDiv.textContent = 'Faturalar yükleniyor...';
@@ -153,6 +227,7 @@
         // Sayfa yüklendiğinde talepleri listele
         window.onload = function() {
             listWithdrawals();
+            listPendingOnly();
         };
     </script>
 </body>
