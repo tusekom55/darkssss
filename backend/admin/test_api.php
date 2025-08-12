@@ -44,27 +44,23 @@ try {
 try {
     switch ($action) {
         case 'users':
-            // Tüm kullanıcıları listele
+            // Tüm kullanıcıları listele (PDO syntax)
             $sql = "SELECT 
                         u.id, u.username, u.email, u.telefon, u.ad_soyad, u.tc_no,
-                        u.balance, u.role, u.is_active, u.created_at, u.son_giris
+                        u.balance, u.role, u.created_at
                     FROM users u
                     WHERE u.role = 'user'
                     ORDER BY u.created_at DESC";
             
             $stmt = $conn->prepare($sql);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $users = [];
-            while ($row = $result->fetch_assoc()) {
-                $users[] = $row;
-            }
+            $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             echo json_encode(['success' => true, 'data' => $users]);
             break;
             
         case 'withdrawals':
-            // Para çekme taleplerini listele
+            // Para çekme taleplerini listele (PDO syntax)
             $sql = "SELECT
                         pct.*,
                         u.username, u.email, u.telefon, u.ad_soyad,
@@ -76,17 +72,13 @@ try {
             
             $stmt = $conn->prepare($sql);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $withdrawals = [];
-            while ($row = $result->fetch_assoc()) {
-                $withdrawals[] = $row;
-            }
+            $withdrawals = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             echo json_encode(['success' => true, 'data' => $withdrawals]);
             break;
             
         case 'invoices':
-            // Faturaları listele
+            // Faturaları listele (PDO syntax)
             $sql = "SELECT f.*, u.username, u.email
                     FROM faturalar f
                     JOIN users u ON f.user_id = u.id
@@ -94,48 +86,37 @@ try {
             
             $stmt = $conn->prepare($sql);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $invoices = [];
-            while ($row = $result->fetch_assoc()) {
-                $invoices[] = $row;
-            }
+            $invoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             echo json_encode(['success' => true, 'data' => $invoices]);
             break;
             
         case 'settings':
-            // Sistem ayarlarını listele
+            // Sistem ayarlarını listele (PDO syntax)
             $sql = "SELECT * FROM sistem_ayarlari ORDER BY ayar_adi";
             $stmt = $conn->prepare($sql);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $settings = [];
-            while ($row = $result->fetch_assoc()) {
-                $settings[] = $row;
-            }
+            $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             echo json_encode(['success' => true, 'data' => $settings]);
             break;
             
         case 'dashboard':
-            // Dashboard istatistikleri
+            // Dashboard istatistikleri (PDO syntax)
             $sql = "SELECT COUNT(*) as total_users FROM users WHERE role = 'user'";
             $stmt = $conn->prepare($sql);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $total_users = $result->fetch_row()[0];
+            $total_users = $stmt->fetchColumn();
             
             $sql = "SELECT COUNT(*) as pending_withdrawals FROM para_cekme_talepleri WHERE durum = 'beklemede'";
             $stmt = $conn->prepare($sql);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $pending_withdrawals = $result->fetch_row()[0];
+            $pending_withdrawals = $stmt->fetchColumn();
             
             $sql = "SELECT COUNT(*) as total_invoices FROM faturalar";
             $stmt = $conn->prepare($sql);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $total_invoices = $result->fetch_row()[0];
+            $total_invoices = $stmt->fetchColumn();
             
             echo json_encode([
                 'success' => true,
@@ -155,4 +136,4 @@ try {
 } catch (Exception $e) {
     echo json_encode(['error' => 'Veritabanı hatası: ' . $e->getMessage()]);
 }
-?> 
+?>
