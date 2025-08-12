@@ -3398,7 +3398,8 @@
         async function loadCoins() {
             try {
                 console.log('🔄 Coinler yükleniyor...');
-                const response = await fetch('backend/admin/coins.php?action=list');
+                // Price control'da çalışan endpoint'i kullan
+                const response = await fetch('backend/admin/price_control.php?action=get_coins');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -3416,7 +3417,7 @@
                 }
                 
                 if (data.success) {
-                    coins = data.data || data.coins || [];
+                    coins = data.coins || data.data || [];
                     console.log('✅ Coinler başarıyla yüklendi:', coins.length, 'coin');
                     displayCoins(coins);
                     
