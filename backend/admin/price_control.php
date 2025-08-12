@@ -26,7 +26,8 @@ if (isset($_GET['action'])) {
                 $conn = db_connect();
                 $sql = "SELECT id, coin_adi, coin_kodu, current_price, price_change_24h, 
                                COALESCE(price_source, 'manuel') as kaynak, 
-                               COALESCE(last_update, created_at) as updated_at
+                               COALESCE(last_update, created_at) as updated_at,
+                               is_active, coin_type, created_at, logo_url
                         FROM coins 
                         WHERE is_active = 1 
                         ORDER BY 
@@ -166,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Yeni manual coin ekle (logo ile)
                 $sql = "INSERT INTO coins (coin_adi, coin_kodu, current_price, coin_type, price_source, logo_url, is_active, created_at) 
-                        VALUES (?, ?, ?, 'manual', 'manual', ?, 1, NOW())";
+                        VALUES (?, ?, ?, 'manual', 'manuel', ?, 1, NOW())";
                 $stmt = $conn->prepare($sql);
                 $result = $stmt->execute([$coin_name, $coin_code, $initial_price, $logo_path]);
                 
