@@ -3397,38 +3397,41 @@
         // Load coins
         async function loadCoins() {
             try {
+                console.log('🔄 Coinler yükleniyor...');
                 const response = await fetch('backend/admin/coins.php?action=list');
-                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const responseText = await response.text();
+                console.log('📡 API yanıtı:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('❌ JSON parse hatası:', parseError);
+                    throw new Error('Sunucudan geçersiz JSON yanıtı alındı');
+                }
                 
                 if (data.success) {
                     coins = data.data || data.coins || [];
+                    console.log('✅ Coinler başarıyla yüklendi:', coins.length, 'coin');
                     displayCoins(coins);
+                    
+                    if (coins.length === 0) {
+                        showNotification('Henüz hiç coin eklenmemiş', 'info');
+                    }
                 } else {
-                    throw new Error(data.error || 'Coinler yüklenemedi');
+                    throw new Error(data.error || 'API başarısız sonuç döndü');
                 }
             } catch (error) {
-                console.error('Coinler yüklenirken hata:', error);
-                // Mock data göster
-                coins = [
-                    {
-                        id: 1,
-                        coin_adi: 'Bitcoin',
-                        coin_kodu: 'BTC',
-                        current_price: 2750000.00,
-                        aciklama: 'Dünyada en popüler kripto para birimi',
-                        is_active: 1,
-                        created_at: '2024-01-01 10:00:00'
-                    },
-                    {
-                        id: 2,
-                        coin_adi: 'Ethereum',
-                        coin_kodu: 'ETH',
-                        current_price: 120000.00,
-                        aciklama: 'Akıllı sözleşme platformu',
-                        is_active: 1,
-                        created_at: '2024-01-01 11:00:00'
-                    }
-                ];
+                console.error('❌ Coinler yüklenirken hata:', error);
+                showNotification('Coinler yüklenemedi: ' + error.message, 'error');
+                
+                // Hata durumunda boş liste göster
+                coins = [];
                 displayCoins(coins);
             }
         }

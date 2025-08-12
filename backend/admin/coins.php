@@ -84,7 +84,7 @@ if (!$conn) {
 
 switch ($action) {
     case 'list':
-        // Coinleri listele - sadece manuel coinler
+        // Coinleri listele - tüm coinler
         $sql = "SELECT 
                     c.id, 
                     c.coin_adi, 
@@ -96,7 +96,6 @@ switch ($action) {
                     c.created_at,
                     c.updated_at
                 FROM coins c
-                WHERE c.coin_type = 'manual'
                 ORDER BY c.created_at DESC";
         
         $stmt = $conn->prepare($sql);
