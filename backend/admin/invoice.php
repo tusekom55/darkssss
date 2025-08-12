@@ -65,9 +65,15 @@ try {
             
         case 'create':
             try {
+                // Debug için tüm inputları logla
+                error_log("Create invoice request started");
+                
                 // JSON verilerini al
                 $raw_input = file_get_contents('php://input');
+                error_log("Raw input: " . $raw_input);
+                
                 $input = json_decode($raw_input, true);
+                error_log("Decoded input: " . print_r($input, true));
                 
                 $user_id = $input['user_id'] ?? $_POST['user_id'] ?? null;
                 $islem_tipi = $input['islem_tipi'] ?? $_POST['islem_tipi'] ?? 'para_cekme';
@@ -75,18 +81,31 @@ try {
                 $tutar = floatval($input['tutar'] ?? $_POST['tutar'] ?? 0);
                 $aciklama = $input['aciklama'] ?? $_POST['aciklama'] ?? '';
                 
+                error_log("Parameters: user_id=$user_id, islem_tipi=$islem_tipi, islem_id=$islem_id, tutar=$tutar");
+                
                 // Parametreleri kontrol et
                 if (empty($user_id) || empty($tutar) || $tutar <= 0) {
-                    echo json_encode(['success' => false, 'error' => 'Geçersiz parametreler: user_id ve tutar gerekli']);
+                    echo json_encode(['success' => false, 'error' => 'Geçersiz parametreler: user_id ve tutar gerekli', 'debug' => compact('user_id', 'tutar')]);
                     break;
                 }
                 
                 // Global MySQLi bağlantısını kullan
                 global $conn;
                 
+                if (!$conn) {
+                    echo json_encode(['success' => false, 'error' => 'Veritabanı bağlantısı yok']);
+                    break;
+                }
+                
                 // Kullanıcı bilgilerini al
                 $sql = "SELECT id, username, email, ad_soyad, tc_no, iban FROM users WHERE id = ?";
                 $stmt = $conn->prepare($sql);
+                
+                if (!$stmt) {
+                    echo json_encode(['success' => false, 'error' => 'SQL prepare hatası: ' . $conn->error]);
+                    break;
+                }
+                
                 $stmt->bind_param('i', $user_id);
                 $stmt->execute();
                 $result = $stmt->get_result();
@@ -96,6 +115,8 @@ try {
                     echo json_encode(['success' => false, 'error' => 'Kullanıcı bulunamadı (ID: ' . $user_id . ')']);
                     break;
                 }
+                
+                error_log("User found: " . print_r($user, true));
                 
                 // Fatura numarası oluştur
                 $fatura_no = 'FTR-' . date('Ymd') . '-' . str_pad($user_id, 4, '0', STR_PAD_LEFT) . '-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
@@ -120,16 +141,31 @@ try {
                     tarih TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     INDEX idx_user_id (user_id),
                     INDEX idx_fatura_no (fatura_no)
-                )";
-                $conn->query($create_table_sql);
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+                
+                $table_result = $conn->query($create_table_sql);
+                if (!$table_result) {
+                    echo json_encode(['success' => false, 'error' => 'Tablo oluşturma hatası: ' . $conn->error]);
+                    break;
+                }
+                
+                error_log("Table creation successful");
                 
                 // Faturayı veritabanına kaydet
                 $sql = "INSERT INTO faturalar (user_id, islem_tipi, islem_id, fatura_no, tutar, kdv_orani, kdv_tutari, toplam_tutar, aciklama) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $conn->prepare($sql);
+                
+                if (!$stmt) {
+                    echo json_encode(['success' => false, 'error' => 'Insert prepare hatası: ' . $conn->error]);
+                    break;
+                }
+                
                 $stmt->bind_param('isisddds', $user_id, $islem_tipi, $islem_id, $fatura_no, $tutar, $kdv_orani, $kdv_tutari, $toplam_tutar, $aciklama);
                 
                 if ($stmt->execute()) {
                     $fatura_id = $conn->insert_id;
+                    
+                    error_log("Invoice created with ID: $fatura_id");
                     
                     $fatura_data = [
                         'id' => $fatura_id,
@@ -143,11 +179,12 @@ try {
                     
                     echo json_encode(['success' => true, 'data' => $fatura_data, 'message' => 'Fatura başarıyla oluşturuldu']);
                 } else {
-                    echo json_encode(['success' => false, 'error' => 'Fatura oluşturulamadı: ' . $conn->error]);
+                    echo json_encode(['success' => false, 'error' => 'Fatura oluşturulamadı: ' . $conn->error, 'sql_error' => $stmt->error]);
                 }
                 
             } catch (Exception $e) {
-                echo json_encode(['success' => false, 'error' => 'Fatura oluşturma hatası: ' . $e->getMessage()]);
+                error_log("Invoice creation exception: " . $e->getMessage());
+                echo json_encode(['success' => false, 'error' => 'Fatura oluşturma hatası: ' . $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             }
             break;
             
