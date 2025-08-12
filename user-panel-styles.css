@@ -101,7 +101,17 @@
             text-align: center;
         }
         
-        /* Ana Ýçerik Alaný */
+        .is-hidden {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Ana ï¿½ï¿½erik Alanï¿½ */
         .main-content {
             margin-left: 280px;
             flex: 1;
@@ -207,7 +217,7 @@
             box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
         }
         
-        /* Ýçerik Alaný */
+        /* ï¿½ï¿½erik Alanï¿½ */
         .content-area {
             padding: 32px;
             min-height: calc(100vh - 80px);
@@ -1491,7 +1501,7 @@
              font-size: 16px;
          }
          
-         /* Grafik alanýný küçült */
+         /* Grafik alanï¿½nï¿½ kï¿½ï¿½ï¿½lt */
          .chart-panel {
              background: linear-gradient(135deg, #141927 0%, #1e2742 100%);
              border-right: 1px solid rgba(255, 255, 255, 0.1);
@@ -4778,7 +4788,7 @@
             }
         }
         
-        /* Kaldýraçlý Ýþlem Stilleri */
+        /* Kaldï¿½raï¿½lï¿½ ï¿½ï¿½lem Stilleri */
         .trading-mode-selection {
             margin-bottom: 20px;
         }
@@ -4927,7 +4937,7 @@
             padding-top: 12px;
         }
         
-        /* Pozisyon Sayfasý Stilleri */
+        /* Pozisyon Sayfasï¿½ Stilleri */
         .position-count {
             background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
             color: white;
@@ -5007,7 +5017,7 @@
             border: 1px solid rgba(245, 158, 11, 0.3);
         }
         
-        /* Modern Mobile Uyumlu Pozisyon Kartlarý */
+        /* Modern Mobile Uyumlu Pozisyon Kartlarï¿½ */
         .modern-positions-container {
             display: grid;
             gap: 24px;
@@ -6995,7 +7005,7 @@
             font-weight: 700;
         }
         
-        /* Empty State Tasarýmý */
+        /* Empty State Tasarï¿½mï¿½ */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -7235,7 +7245,7 @@
             }
         }
         
-        /* Eski tablo stilleri - artýk kullanýlmýyor */
+        /* Eski tablo stilleri - artï¿½k kullanï¿½lmï¿½yor */
         .positions-table {
             width: 100%;
             border-collapse: collapse;
@@ -7261,7 +7271,7 @@
             color: #ffffff;
         }
         
-        /* Küçük Candlestick Grafik Stilleri */
+        /* Kï¿½ï¿½ï¿½k Candlestick Grafik Stilleri */
         .coin-chart-cell {
             display: flex;
             flex-direction: column;
@@ -7411,7 +7421,7 @@
 
 
 
-        /* Mobile Responsive - Kaldýraç */
+        /* Mobile Responsive - Kaldï¿½raï¿½ */
         @media (max-width: 768px) {
             .leverage-buttons {
                 grid-template-columns: repeat(2, 1fr);

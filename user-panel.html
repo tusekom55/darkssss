@@ -43,7 +43,7 @@
                         <span>Piyasalar</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item is-hidden" style="display: none !important;">
                     <a href="#" class="nav-link" data-section="trading">
                         <i class="fas fa-exchange-alt"></i>
                         <span>İşlem Yap</span>
@@ -56,13 +56,13 @@
                         <span class="position-count" id="positionCount" style="display: none;">0</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item is-hidden" style="display: none !important;">
                     <a href="#" class="nav-link" data-section="recommendations">
                         <i class="fas fa-lightbulb"></i>
                         <span>Tavsiyeler</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item is-hidden" style="display: none !important;">
                     <a href="#" class="nav-link" data-section="wallet">
                         <i class="fas fa-wallet"></i>
                         <span>Cüzdan</span>
@@ -119,65 +119,8 @@
                         <p class="section-subtitle">Trading hesabınızın genel durumu</p>
                     </div>
                     
-                    <div class="grid grid-3">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Toplam Bakiye</h3>
-                                <i class="fas fa-wallet" style="color: #00d4aa;"></i>
-                            </div>
-                            <div id="totalBalance" class="loading">
-                                <div class="spinner"></div>
-                                Yükleniyor...
-                            </div>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Günlük Kazanç</h3>
-                                <i class="fas fa-chart-line" style="color: #00d4aa;"></i>
-                            </div>
-                            <div id="dailyPnl" class="loading">
-                                <div class="spinner"></div>
-                                Hesaplanıyor...
-                            </div>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Açık Pozisyonlar</h3>
-                                <i class="fas fa-chart-pie" style="color: #00d4aa;"></i>
-                            </div>
-                            <div id="openPositions" class="loading">
-                                <div class="spinner"></div>
-                                Yükleniyor...
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-2">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Son İşlemler</h3>
-                            </div>
-                            <div id="recentTrades" class="loading">
-                                <div class="spinner"></div>
-                                Yükleniyor...
-                            </div>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Piyasa Özetı</h3>
-                            </div>
-                            <div id="marketSummary" class="loading">
-                                <div class="spinner"></div>
-                                Yükleniyor...
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Hızlı İşlemler Paneli - Dashboard'a taşındı -->
-                    <div class="card" style="margin-top: 32px;">
+                    <!-- Hızlı İşlemler Paneli - Üste taşındı -->
+                    <div class="card" style="margin-bottom: 32px;">
                         <div class="card-header">
                             <h3 class="card-title">
                                 <i class="fas fa-bolt" style="color: #00d4aa; margin-right: 8px;"></i>
@@ -247,6 +190,66 @@
                             </button>
                         </div>
                     </div>
+                    
+                    <div class="grid grid-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Toplam Bakiye</h3>
+                                <i class="fas fa-wallet" style="color: #00d4aa;"></i>
+                            </div>
+                            <div id="totalBalance" class="loading">
+                                <div class="spinner"></div>
+                                Yükleniyor...
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Günlük Kazanç</h3>
+                                <i class="fas fa-chart-line" style="color: #00d4aa;"></i>
+                            </div>
+                            <div id="dailyPnl" class="loading">
+                                <div class="spinner"></div>
+                                Hesaplanıyor...
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Açık Pozisyonlar</h3>
+                                <i class="fas fa-chart-pie" style="color: #00d4aa;"></i>
+                            </div>
+                            <div id="openPositions" class="loading">
+                                <div class="spinner"></div>
+                                Yükleniyor...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Son İşlemler</h3>
+                            </div>
+                            <div id="recentTrades" class="loading">
+                                <div class="spinner"></div>
+                                Yükleniyor...
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Piyasa Özetı</h3>
+                            </div>
+                            <div id="marketSummary" class="loading">
+                                <div class="spinner"></div>
+                                Yükleniyor...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hızlı İşlemler Paneli - Dashboard'a taşındı -->
+
                 </section>
                 
                 <!-- Diğer bölümler buraya eklenecek -->
@@ -1577,7 +1580,7 @@
                                                 <i class="fas fa-plus"></i>
                                                 <span>Para Yatır</span>
                                             </button>
-                                            <button class="balance-action-btn withdraw" onclick="showWithdrawalComingSoon()">
+                                            <button class="balance-action-btn withdraw" onclick="navigateToWithdrawal()">
                                                 <i class="fas fa-minus"></i>
                                                 <span>Para Çek</span>
                                             </button>
@@ -1768,8 +1771,62 @@
     </div>
 
     <script>
+        // Global coin logoları - tüm fonksiyonlarda kullanılabilir
+        window.coinLogos = {
+            'BTC': 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
+            'ETH': 'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
+            'BNB': 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
+            'ADA': 'https://assets.coingecko.com/coins/images/975/large/cardano.png',
+            'SOL': 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
+            'XRP': 'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
+            'DOT': 'https://assets.coingecko.com/coins/images/12171/large/polkadot.png',
+            'DOGE': 'https://assets.coingecko.com/coins/images/5/large/dogecoin.png',
+            'AVAX': 'https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png',
+            'SHIB': 'https://assets.coingecko.com/coins/images/11939/large/shiba.png',
+            'LINK': 'https://assets.coingecko.com/coins/images/877/large/chainlink-new-logo.png',
+            'TRX': 'https://assets.coingecko.com/coins/images/1094/large/tron-logo.png',
+            'MATIC': 'https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png',
+            'LTC': 'https://assets.coingecko.com/coins/images/2/large/litecoin.png',
+            'BCH': 'https://assets.coingecko.com/coins/images/780/large/bitcoin-cash-circle.png',
+            'UNI': 'https://assets.coingecko.com/coins/images/12504/large/uniswap-uni.png',
+            'ATOM': 'https://assets.coingecko.com/coins/images/1481/large/cosmos_hub.png',
+            'XLM': 'https://assets.coingecko.com/coins/images/100/large/Stellar_symbol_black_RGB.png',
+            'VET': 'https://assets.coingecko.com/coins/images/1167/large/VeChain-Logo-768x725.png',
+            'FIL': 'https://assets.coingecko.com/coins/images/12817/large/filecoin.png',
+            'THETA': 'https://assets.coingecko.com/coins/images/2538/large/theta-token-logo.png',
+            'ICP': 'https://assets.coingecko.com/coins/images/14495/large/Internet_Computer_logo.png',
+            'ALGO': 'https://assets.coingecko.com/coins/images/4380/large/download.png',
+            'XTZ': 'https://assets.coingecko.com/coins/images/976/large/Tezos-logo.png',
+            'EGLD': 'https://assets.coingecko.com/coins/images/12335/large/egld-token-logo.png',
+            'AAVE': 'https://assets.coingecko.com/coins/images/12645/large/AAVE.png',
+            'EOS': 'https://assets.coingecko.com/coins/images/738/large/eos-eos-logo.png',
+            'XMR': 'https://assets.coingecko.com/coins/images/69/large/monero_logo.png',
+            'MANA': 'https://assets.coingecko.com/coins/images/878/large/decentraland-mana.png',
+            'SAND': 'https://assets.coingecko.com/coins/images/12129/large/sandbox_logo.jpg',
+            'CRO': 'https://assets.coingecko.com/coins/images/7310/large/cypto.png',
+            'NEAR': 'https://assets.coingecko.com/coins/images/10365/large/near_icon.png',
+            'APE': 'https://assets.coingecko.com/coins/images/24383/large/apecoin.jpg',
+            'LDO': 'https://assets.coingecko.com/coins/images/13573/large/Lido_DAO.png',
+            'USDT': 'https://assets.coingecko.com/coins/images/325/large/Tether.png',
+            'USDC': 'https://assets.coingecko.com/coins/images/6319/large/USD_Coin_icon.png',
+            'BUSD': 'https://assets.coingecko.com/coins/images/9576/large/BUSD.png',
+            'DAI': 'https://assets.coingecko.com/coins/images/9956/large/4943.png'
+        };
+        
+        // Geriye uyumluluk için const da tanımla
+        const coinLogos = window.coinLogos;
+
         // Sayfa yüklendiğinde
         document.addEventListener('DOMContentLoaded', function() {
+            // coinLogos'un tanımlanıp tanımlanmadığını kontrol et
+            if (!window.coinLogos) {
+                console.error('❌ coinLogos tanımlanmamış!');
+                // Fallback olarak basit bir obje oluştur
+                window.coinLogos = {};
+            } else {
+                console.log('✅ coinLogos başarıyla tanımlandı:', Object.keys(window.coinLogos).length, 'coin logosu');
+            }
+            
             loadUserInfo();
             setupNavigation();
             setupDepositForm(); // Para yatırma formunu başlat
@@ -2626,13 +2683,13 @@
                                     <i class="fas fa-chevron-right"></i>
                                 </div>
                             </div>
-                            <div class="balance-menu-item" onclick="showWithdrawalComingSoon()">
+                            <div class="balance-menu-item" onclick="navigateToWithdrawal()">
                                 <div class="balance-menu-icon withdrawal">
                                     <i class="fas fa-minus-circle"></i>
                                 </div>
                                 <div class="balance-menu-text">
                                     <h4>Para Çek</h4>
-                                    <p>Yakında gelecek</p>
+                                    <p>Hesabınızdan para çekin</p>
                                 </div>
                                 <div class="balance-menu-arrow">
                                     <i class="fas fa-chevron-right"></i>
@@ -2682,7 +2739,7 @@
             const navLinks = document.querySelectorAll('.nav-link');
             navLinks.forEach(link => {
                 link.classList.remove('active');
-                if (link.dataset.section === 'deposit') {
+                if (link.dataset_section === 'deposit') {
                     link.classList.add('active');
                 }
             });
@@ -2703,10 +2760,38 @@
             }
         }
         
-        // Para çekme yakında gelecek uyarısı
-        function showWithdrawalComingSoon() {
+        // Para çekme sayfasına yönlendir
+        function navigateToWithdrawal() {
             closeBalanceMenu();
-            showNotification('Para çekme özelliği yakında gelecek!', 'info');
+            
+            // Sol menüdeki "Para Çek" linkini aktif et
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset_section === 'withdrawal') {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Withdrawal bölümünü göster
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById('withdrawal').classList.add('active');
+            
+            // Sayfa başlığını güncelle
+            document.getElementById('pageTitle').textContent = 'Para Çek';
+            
+            // Para çekme taleplerini yükle
+            if (typeof loadRecentWithdrawals === 'function') {
+                loadRecentWithdrawals();
+            }
+        }
+        
+        // Para çekme yakında gelecek uyarısı (geriye uyumluluk için)
+        function showWithdrawalComingSoon() {
+            navigateToWithdrawal();
         }
 
         // Notification göster
@@ -3150,7 +3235,7 @@
                 const profitLossColor = item.profit_loss >= 0 ? '#10b981' : '#ef4444';
                 const trendClass = item.profit_loss >= 0 ? 'positive' : 'negative';
                 const trendIcon = item.profit_loss >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
-                const logoUrl = item.logo_url || coinLogos[item.coin_kodu] || `https://via.placeholder.com/40/4fc3f7/ffffff?text=${item.coin_kodu.charAt(0)}`;
+                const logoUrl = item.logo_url || (window.coinLogos && window.coinLogos[item.coin_kodu]) || `https://via.placeholder.com/40/4fc3f7/ffffff?text=${item.coin_kodu.charAt(0)}`;
                 
                 const card = document.createElement('div');
                 card.className = 'portfolio-asset-card';
@@ -4216,50 +4301,8 @@
             // Güvenli string işleme için coinSymbol'ü temizle
             const safeCoinSymbol = String(coinSymbol).trim().toUpperCase();
             
-            // Gerçek coin logoları (piyasalardaki gibi)
-            const coinLogos = {
-                'BTC': 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
-                'ETH': 'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
-                'BNB': 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
-                'ADA': 'https://assets.coingecko.com/coins/images/975/large/cardano.png',
-                'SOL': 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
-                'XRP': 'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
-                'DOT': 'https://assets.coingecko.com/coins/images/12171/large/polkadot.png',
-                'DOGE': 'https://assets.coingecko.com/coins/images/5/large/dogecoin.png',
-                'AVAX': 'https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png',
-                'SHIB': 'https://assets.coingecko.com/coins/images/11939/large/shiba.png',
-                'LINK': 'https://assets.coingecko.com/coins/images/877/large/chainlink-new-logo.png',
-                'TRX': 'https://assets.coingecko.com/coins/images/1094/large/tron-logo.png',
-                'MATIC': 'https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png',
-                'LTC': 'https://assets.coingecko.com/coins/images/2/large/litecoin.png',
-                'BCH': 'https://assets.coingecko.com/coins/images/780/large/bitcoin-cash-circle.png',
-                'UNI': 'https://assets.coingecko.com/coins/images/12504/large/uniswap-uni.png',
-                'ATOM': 'https://assets.coingecko.com/coins/images/1481/large/cosmos_hub.png',
-                'XLM': 'https://assets.coingecko.com/coins/images/100/large/Stellar_symbol_black_RGB.png',
-                'VET': 'https://assets.coingecko.com/coins/images/1167/large/VeChain-Logo-768x725.png',
-                'FIL': 'https://assets.coingecko.com/coins/images/12817/large/filecoin.png',
-                'THETA': 'https://assets.coingecko.com/coins/images/2538/large/theta-token-logo.png',
-                'ICP': 'https://assets.coingecko.com/coins/images/14495/large/Internet_Computer_logo.png',
-                'ALGO': 'https://assets.coingecko.com/coins/images/4380/large/download.png',
-                'XTZ': 'https://assets.coingecko.com/coins/images/976/large/Tezos-logo.png',
-                'EGLD': 'https://assets.coingecko.com/coins/images/12335/large/egld-token-logo.png',
-                'AAVE': 'https://assets.coingecko.com/coins/images/12645/large/AAVE.png',
-                'EOS': 'https://assets.coingecko.com/coins/images/738/large/eos-eos-logo.png',
-                'XMR': 'https://assets.coingecko.com/coins/images/69/large/monero_logo.png',
-                'MANA': 'https://assets.coingecko.com/coins/images/878/large/decentraland-mana.png',
-                'SAND': 'https://assets.coingecko.com/coins/images/12129/large/sandbox_logo.jpg',
-                'CRO': 'https://assets.coingecko.com/coins/images/7310/large/cypto.png',
-                'NEAR': 'https://assets.coingecko.com/coins/images/10365/large/near_icon.png',
-                'APE': 'https://assets.coingecko.com/coins/images/24383/large/apecoin.jpg',
-                'LDO': 'https://assets.coingecko.com/coins/images/13573/large/Lido_DAO.png',
-                'USDT': 'https://assets.coingecko.com/coins/images/325/large/Tether.png',
-                'USDC': 'https://assets.coingecko.com/coins/images/6319/large/USD_Coin_icon.png',
-                'BUSD': 'https://assets.coingecko.com/coins/images/9576/large/BUSD.png',
-                'DAI': 'https://assets.coingecko.com/coins/images/9956/large/4943.png'
-            };
-            
             // Logo URL'ini belirle
-            const logoUrl = coinLogos[safeCoinSymbol];
+            const logoUrl = window.coinLogos && window.coinLogos[safeCoinSymbol];
             const firstLetter = safeCoinSymbol.charAt(0) || 'C';
             
             // Container'ı temizle
@@ -4814,49 +4857,7 @@
                 const priceChangeClass = coin.price_change_24h >= 0 ? 'positive' : 'negative';
                 const priceChangeIcon = coin.price_change_24h >= 0 ? '▲' : '▼';
                 
-                // Orijinal coin logoları
-                const coinLogos = {
-                    'BTC': 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
-                    'ETH': 'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
-                    'BNB': 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
-                    'ADA': 'https://assets.coingecko.com/coins/images/975/large/cardano.png',
-                    'SOL': 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
-                    'XRP': 'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
-                    'DOT': 'https://assets.coingecko.com/coins/images/12171/large/polkadot.png',
-                    'DOGE': 'https://assets.coingecko.com/coins/images/5/large/dogecoin.png',
-                    'AVAX': 'https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png',
-                    'SHIB': 'https://assets.coingecko.com/coins/images/11939/large/shiba.png',
-                    'LINK': 'https://assets.coingecko.com/coins/images/877/large/chainlink-new-logo.png',
-                    'TRX': 'https://assets.coingecko.com/coins/images/1094/large/tron-logo.png',
-                    'MATIC': 'https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png',
-                    'LTC': 'https://assets.coingecko.com/coins/images/2/large/litecoin.png',
-                    'BCH': 'https://assets.coingecko.com/coins/images/780/large/bitcoin-cash-circle.png',
-                    'UNI': 'https://assets.coingecko.com/coins/images/12504/large/uniswap-uni.png',
-                    'ATOM': 'https://assets.coingecko.com/coins/images/1481/large/cosmos_hub.png',
-                    'XLM': 'https://assets.coingecko.com/coins/images/100/large/Stellar_symbol_black_RGB.png',
-                    'VET': 'https://assets.coingecko.com/coins/images/1167/large/VeChain-Logo-768x725.png',
-                    'FIL': 'https://assets.coingecko.com/coins/images/12817/large/filecoin.png',
-                    'THETA': 'https://assets.coingecko.com/coins/images/2538/large/theta-token-logo.png',
-                    'ICP': 'https://assets.coingecko.com/coins/images/14495/large/Internet_Computer_logo.png',
-                    'ALGO': 'https://assets.coingecko.com/coins/images/4380/large/download.png',
-                    'XTZ': 'https://assets.coingecko.com/coins/images/976/large/Tezos-logo.png',
-                    'EGLD': 'https://assets.coingecko.com/coins/images/12335/large/egld-token-logo.png',
-                    'AAVE': 'https://assets.coingecko.com/coins/images/12645/large/AAVE.png',
-                    'EOS': 'https://assets.coingecko.com/coins/images/738/large/eos-eos-logo.png',
-                    'XMR': 'https://assets.coingecko.com/coins/images/69/large/monero_logo.png',
-                    'MANA': 'https://assets.coingecko.com/coins/images/878/large/decentraland-mana.png',
-                    'SAND': 'https://assets.coingecko.com/coins/images/12129/large/sandbox_logo.jpg',
-                    'CRO': 'https://assets.coingecko.com/coins/images/7310/large/cypto.png',
-                    'NEAR': 'https://assets.coingecko.com/coins/images/10365/large/near_icon.png',
-                    'APE': 'https://assets.coingecko.com/coins/images/24383/large/apecoin.jpg',
-                    'LDO': 'https://assets.coingecko.com/coins/images/13573/large/Lido_DAO.png',
-                    'USDT': 'https://assets.coingecko.com/coins/images/325/large/Tether.png',
-                    'USDC': 'https://assets.coingecko.com/coins/images/6319/large/USD_Coin_icon.png',
-                    'BUSD': 'https://assets.coingecko.com/coins/images/9576/large/BUSD.png',
-                    'DAI': 'https://assets.coingecko.com/coins/images/9956/large/4943.png'
-                };
-                
-                const logoUrl = coin.logo_url || coinLogos[coin.coin_kodu] || `https://via.placeholder.com/48/4fc3f7/ffffff?text=${coin.coin_kodu.charAt(0)}`;
+                const logoUrl = coin.logo_url || (window.coinLogos && window.coinLogos[coin.coin_kodu]) || `https://via.placeholder.com/48/4fc3f7/ffffff?text=${coin.coin_kodu.charAt(0)}`;
                 
                         const card = document.createElement('div');
                         card.className = 'desktop-coin-card';
@@ -4915,49 +4916,7 @@
                 const priceChangeClass = coin.price_change_24h >= 0 ? 'positive' : 'negative';
                 const priceChangeIcon = coin.price_change_24h >= 0 ? '▲' : '▼';
                 
-                // Orijinal coin logoları
-                const coinLogos = {
-                    'BTC': 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
-                    'ETH': 'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
-                    'BNB': 'https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png',
-                    'ADA': 'https://assets.coingecko.com/coins/images/975/large/cardano.png',
-                    'SOL': 'https://assets.coingecko.com/coins/images/4128/large/solana.png',
-                    'XRP': 'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
-                    'DOT': 'https://assets.coingecko.com/coins/images/12171/large/polkadot.png',
-                    'DOGE': 'https://assets.coingecko.com/coins/images/5/large/dogecoin.png',
-                    'AVAX': 'https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png',
-                    'SHIB': 'https://assets.coingecko.com/coins/images/11939/large/shiba.png',
-                    'LINK': 'https://assets.coingecko.com/coins/images/877/large/chainlink-new-logo.png',
-                    'TRX': 'https://assets.coingecko.com/coins/images/1094/large/tron-logo.png',
-                    'MATIC': 'https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png',
-                    'LTC': 'https://assets.coingecko.com/coins/images/2/large/litecoin.png',
-                    'BCH': 'https://assets.coingecko.com/coins/images/780/large/bitcoin-cash-circle.png',
-                    'UNI': 'https://assets.coingecko.com/coins/images/12504/large/uniswap-uni.png',
-                    'ATOM': 'https://assets.coingecko.com/coins/images/1481/large/cosmos_hub.png',
-                    'XLM': 'https://assets.coingecko.com/coins/images/100/large/Stellar_symbol_black_RGB.png',
-                    'VET': 'https://assets.coingecko.com/coins/images/1167/large/VeChain-Logo-768x725.png',
-                    'FIL': 'https://assets.coingecko.com/coins/images/12817/large/filecoin.png',
-                    'THETA': 'https://assets.coingecko.com/coins/images/2538/large/theta-token-logo.png',
-                    'ICP': 'https://assets.coingecko.com/coins/images/14495/large/Internet_Computer_logo.png',
-                    'ALGO': 'https://assets.coingecko.com/coins/images/4380/large/download.png',
-                    'XTZ': 'https://assets.coingecko.com/coins/images/976/large/Tezos-logo.png',
-                    'EGLD': 'https://assets.coingecko.com/coins/images/12335/large/egld-token-logo.png',
-                    'AAVE': 'https://assets.coingecko.com/coins/images/12645/large/AAVE.png',
-                    'EOS': 'https://assets.coingecko.com/coins/images/738/large/eos-eos-logo.png',
-                    'XMR': 'https://assets.coingecko.com/coins/images/69/large/monero_logo.png',
-                    'MANA': 'https://assets.coingecko.com/coins/images/878/large/decentraland-mana.png',
-                    'SAND': 'https://assets.coingecko.com/coins/images/12129/large/sandbox_logo.jpg',
-                    'CRO': 'https://assets.coingecko.com/coins/images/7310/large/cypto.png',
-                    'NEAR': 'https://assets.coingecko.com/coins/images/10365/large/near_icon.png',
-                    'APE': 'https://assets.coingecko.com/coins/images/24383/large/apecoin.jpg',
-                    'LDO': 'https://assets.coingecko.com/coins/images/13573/large/Lido_DAO.png',
-                    'USDT': 'https://assets.coingecko.com/coins/images/325/large/Tether.png',
-                    'USDC': 'https://assets.coingecko.com/coins/images/6319/large/USD_Coin_icon.png',
-                    'BUSD': 'https://assets.coingecko.com/coins/images/9576/large/BUSD.png',
-                    'DAI': 'https://assets.coingecko.com/coins/images/9956/large/4943.png'
-                };
-                
-                const logoUrl = coin.logo_url || coinLogos[coin.coin_kodu] || `https://via.placeholder.com/50/4fc3f7/ffffff?text=${coin.coin_kodu.charAt(0)}`;
+                const logoUrl = coin.logo_url || (window.coinLogos && window.coinLogos[coin.coin_kodu]) || `https://via.placeholder.com/50/4fc3f7/ffffff?text=${coin.coin_kodu.charAt(0)}`;
                 
                 const card = document.createElement('div');
                 card.className = 'mobile-coin-card';
@@ -7752,7 +7711,7 @@
         }
 
         function showWithdrawalComingSoon() {
-            showNotification('Para çekme özelliği yakında gelecek!', 'info');
+            navigateToWithdrawal();
         }
 
         // Modern Transaction History Loading
@@ -8144,7 +8103,7 @@
                                 <button onclick="showSection('deposit')" style="background: #00d4aa; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
                                     <i class="fas fa-plus"></i> Para Yatır
                                 </button>
-                                <button onclick="showWithdrawalComingSoon()" style="background: #2d3748; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                                <button onclick="navigateToWithdrawal()" style="background: #2d3748; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">
                                     <i class="fas fa-minus"></i> Para Çek
                                 </button>
                             </div>
