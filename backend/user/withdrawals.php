@@ -25,22 +25,28 @@ try {
     // Config.php'deki db_connect fonksiyonunu kullan
     $pdo = db_connect();
     
-    // Withdrawals tablosunu kontrol et ve oluştur
-    $checkTable = $pdo->query("SHOW TABLES LIKE 'withdrawals'");
+    // Admin paneli ile uyumlu para_cekme_talepleri tablosunu kontrol et ve oluştur
+    $checkTable = $pdo->query("SHOW TABLES LIKE 'para_cekme_talepleri'");
     if ($checkTable->rowCount() == 0) {
         $createTable = "
-        CREATE TABLE withdrawals (
+        CREATE TABLE para_cekme_talepleri (
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
             yontem VARCHAR(50) NOT NULL,
             tutar DECIMAL(15,2) NOT NULL,
-            detay_bilgiler JSON,
+            banka_adi VARCHAR(100),
+            iban VARCHAR(50),
+            hesap_sahibi VARCHAR(100),
+            papara_no VARCHAR(50),
+            detay_bilgiler TEXT,
             aciklama TEXT,
             durum ENUM('beklemede', 'onaylandi', 'reddedildi') DEFAULT 'beklemede',
             tarih TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            admin_not TEXT,
-            islem_tarihi TIMESTAMP NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            onay_tarihi TIMESTAMP NULL,
+            onaylayan_admin_id INT NULL,
+            admin_aciklama TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (onaylayan_admin_id) REFERENCES users(id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ";
         $pdo->exec($createTable);
@@ -84,16 +90,37 @@ try {
                 throw new Exception('Yetersiz bakiye');
             }
 
-            // Para çekme talebini kaydet
+            // Detay bilgilerini parse et
+            $detay = json_decode($detay_bilgiler, true);
+            $banka_adi = '';
+            $iban = '';
+            $hesap_sahibi = '';
+            $papara_no = '';
+            
+            if ($yontem === 'bank_transfer') {
+                $banka_adi = $detay['bank_name'] ?? '';
+                $iban = $detay['iban_number'] ?? '';
+                $hesap_sahibi = $detay['recipient_name'] ?? '';
+            } elseif ($yontem === 'papara') {
+                $papara_no = $detay['papara_number'] ?? '';
+                $hesap_sahibi = $detay['account_name'] ?? '';
+            }
+
+            // Admin paneli ile uyumlu para_cekme_talepleri tablosuna kaydet
             $stmt = $pdo->prepare("
-                INSERT INTO withdrawals (user_id, yontem, tutar, detay_bilgiler, aciklama) 
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO para_cekme_talepleri (
+                    user_id, yontem, tutar, banka_adi, iban, hesap_sahibi, papara_no, detay_bilgiler, aciklama
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
             
             $result = $stmt->execute([
                 $user_id, 
                 $yontem, 
                 $tutar, 
+                $banka_adi,
+                $iban,
+                $hesap_sahibi,
+                $papara_no,
                 $detay_bilgiler, 
                 $aciklama
             ]);
@@ -117,19 +144,23 @@ try {
             break;
 
         case 'list':
-            // Kullanıcının para çekme taleplerini listele
+            // Kullanıcının para çekme taleplerini listele (admin paneli ile uyumlu)
             $stmt = $pdo->prepare("
                 SELECT 
                     id,
                     yontem,
                     tutar,
+                    banka_adi,
+                    iban,
+                    hesap_sahibi,
+                    papara_no,
                     detay_bilgiler,
                     aciklama,
                     durum,
                     tarih,
-                    admin_not,
-                    islem_tarihi
-                FROM withdrawals 
+                    onay_tarihi,
+                    admin_aciklama
+                FROM para_cekme_talepleri 
                 WHERE user_id = ? 
                 ORDER BY tarih DESC 
                 LIMIT 20
@@ -140,12 +171,12 @@ try {
 
             // JSON formatı düzenle
             foreach ($withdrawals as &$withdrawal) {
-                if (!empty($withdrawal['detay_bilgiler'])) {
-                    $withdrawal['detay_bilgiler'] = json_decode($withdrawal['detay_bilgiler'], true);
-                }
-                
                 $withdrawal['tutar'] = floatval($withdrawal['tutar']);
                 $withdrawal['tarih_formatted'] = date('d.m.Y H:i', strtotime($withdrawal['tarih']));
+                
+                if ($withdrawal['onay_tarihi']) {
+                    $withdrawal['onay_tarihi_formatted'] = date('d.m.Y H:i', strtotime($withdrawal['onay_tarihi']));
+                }
             }
 
             echo json_encode([
@@ -156,7 +187,7 @@ try {
             break;
 
         case 'status':
-            // Belirli bir talebin durumunu getir
+            // Belirli bir talebin durumunu getir (admin paneli ile uyumlu)
             $withdrawal_id = $_GET['id'] ?? 0;
             
             if (!$withdrawal_id) {
@@ -168,11 +199,17 @@ try {
                     id,
                     yontem,
                     tutar,
+                    banka_adi,
+                    iban,
+                    hesap_sahibi,
+                    papara_no,
+                    detay_bilgiler,
+                    aciklama,
                     durum,
                     tarih,
-                    admin_not,
-                    islem_tarihi
-                FROM withdrawals 
+                    onay_tarihi,
+                    admin_aciklama
+                FROM para_cekme_talepleri 
                 WHERE id = ? AND user_id = ?
             ");
             
@@ -185,6 +222,10 @@ try {
 
             $withdrawal['tutar'] = floatval($withdrawal['tutar']);
             $withdrawal['tarih_formatted'] = date('d.m.Y H:i', strtotime($withdrawal['tarih']));
+            
+            if ($withdrawal['onay_tarihi']) {
+                $withdrawal['onay_tarihi_formatted'] = date('d.m.Y H:i', strtotime($withdrawal['onay_tarihi']));
+            }
 
             echo json_encode([
                 'success' => true,
