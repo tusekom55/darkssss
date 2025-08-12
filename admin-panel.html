@@ -1611,8 +1611,8 @@
                         <button class="action-btn btn-view" onclick="viewUser(${user.id})">
                             <i class="fas fa-eye"></i> İncele
                         </button>
-                        <button class="action-btn btn-invoice" onclick="showCreateInvoiceModal(${user.id}, '${user.username}')">
-                            <i class="fas fa-file-invoice"></i> Fatura Oluştur
+                        <button class="action-btn btn-warning" onclick="editUserBalance(${user.id}, '${user.username}', ${user.balance})">
+                            <i class="fas fa-edit"></i> Bakiye Düzenle
                         </button>
                         <button class="action-btn btn-delete" onclick="deleteUser(${user.id})">
                             <i class="fas fa-trash"></i> Sil
@@ -2660,6 +2660,232 @@
             } catch (error) {
                 console.error('Ayar güncelleme hatası:', error);
                 alert('Ayar güncellenemedi');
+            }
+        }
+
+        // Edit user balance
+        function editUserBalance(userId, username, currentBalance) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-edit"></i> Bakiye Düzenle - ${username}</h3>
+                        <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <div><strong>Kullanıcı:</strong> ${username}</div>
+                                <div><strong>Mevcut Bakiye:</strong> ₺${parseFloat(currentBalance).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">İşlem Tipi:</label>
+                            <select id="balance-operation-type" class="form-select" onchange="updateBalanceOperation()">
+                                <option value="set">Bakiyeyi Belirle</option>
+                                <option value="add">Bakiye Ekle</option>
+                                <option value="subtract">Bakiye Düş</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" id="balance-amount-label">Yeni Bakiye (₺):</label>
+                            <input type="number" id="balance-amount" class="form-input" 
+                                   min="0" step="0.01" placeholder="Tutar girin" value="${currentBalance}">
+                            <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;" id="balance-help-text">
+                                Kullanıcının bakiyesi bu tutara ayarlanacak
+                            </small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Açıklama (Opsiyonel):</label>
+                            <textarea id="balance-description" class="form-textarea" rows="3" placeholder="İşlem açıklaması"></textarea>
+                        </div>
+                        
+                        <!-- Bakiye Önizlemesi -->
+                        <div id="balance-preview" style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff; margin-bottom: 20px;">
+                            <h4 style="color: #007bff; margin-bottom: 10px;">💰 İşlem Önizlemesi</h4>
+                            <div id="balance-preview-details">
+                                <div><strong>Mevcut Bakiye:</strong> ₺${parseFloat(currentBalance).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</div>
+                                <div><strong>Yeni Bakiye:</strong> ₺${parseFloat(currentBalance).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</div>
+                                <div><strong>Değişim:</strong> ₺0.00</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button type="button" class="btn-primary" onclick="updateBalance(${userId}, '${username}', ${currentBalance})">
+                                <i class="fas fa-save"></i> Bakiyeyi Güncelle
+                            </button>
+                            <button type="button" class="action-btn btn-view" onclick="previewBalanceChange(${currentBalance})">
+                                <i class="fas fa-eye"></i> Önizleme
+                            </button>
+                            <button type="button" class="action-btn btn-reject" onclick="this.parentElement.parentElement.parentElement.remove()">
+                                <i class="fas fa-times"></i> İptal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Modal dışına tıklanınca kapat
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+            
+            // Otomatik önizleme
+            previewBalanceChange(currentBalance);
+        }
+
+        // Update balance operation type
+        function updateBalanceOperation() {
+            const operationType = document.getElementById('balance-operation-type').value;
+            const amountLabel = document.getElementById('balance-amount-label');
+            const helpText = document.getElementById('balance-help-text');
+            const amountInput = document.getElementById('balance-amount');
+            
+            switch(operationType) {
+                case 'set':
+                    amountLabel.textContent = 'Yeni Bakiye (₺):';
+                    helpText.textContent = 'Kullanıcının bakiyesi bu tutara ayarlanacak';
+                    break;
+                case 'add':
+                    amountLabel.textContent = 'Eklenecek Tutar (₺):';
+                    helpText.textContent = 'Bu tutar mevcut bakiyeye eklenecek';
+                    amountInput.value = '';
+                    break;
+                case 'subtract':
+                    amountLabel.textContent = 'Düşülecek Tutar (₺):';
+                    helpText.textContent = 'Bu tutar mevcut bakiyeden düşülecek';
+                    amountInput.value = '';
+                    break;
+            }
+            
+            // Önizlemeyi güncelle
+            const currentBalance = parseFloat(document.getElementById('balance-amount').dataset.currentBalance || 0);
+            previewBalanceChange(currentBalance);
+        }
+
+        // Preview balance change
+        function previewBalanceChange(currentBalance) {
+            const operationType = document.getElementById('balance-operation-type').value;
+            const amount = parseFloat(document.getElementById('balance-amount').value) || 0;
+            
+            let newBalance = currentBalance;
+            let changeAmount = 0;
+            
+            switch(operationType) {
+                case 'set':
+                    newBalance = amount;
+                    changeAmount = amount - currentBalance;
+                    break;
+                case 'add':
+                    newBalance = currentBalance + amount;
+                    changeAmount = amount;
+                    break;
+                case 'subtract':
+                    newBalance = currentBalance - amount;
+                    changeAmount = -amount;
+                    break;
+            }
+            
+            const detailsDiv = document.getElementById('balance-preview-details');
+            const changeColor = changeAmount >= 0 ? '#28a745' : '#dc3545';
+            const changeSign = changeAmount >= 0 ? '+' : '';
+            
+            detailsDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                    <div><strong>Mevcut Bakiye:</strong><br>₺${currentBalance.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</div>
+                    <div><strong>Yeni Bakiye:</strong><br>₺${newBalance.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</div>
+                    <div><strong>Değişim:</strong><br><span style="color: ${changeColor}; font-weight: bold;">${changeSign}₺${Math.abs(changeAmount).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span></div>
+                </div>
+            `;
+        }
+
+        // Update user balance
+        async function updateBalance(userId, username, currentBalance) {
+            const operationType = document.getElementById('balance-operation-type').value;
+            const amount = parseFloat(document.getElementById('balance-amount').value);
+            const description = document.getElementById('balance-description').value.trim();
+            
+            if (!amount || amount < 0) {
+                showNotification('Geçerli bir tutar girin!', 'error');
+                return;
+            }
+            
+            let newBalance = currentBalance;
+            switch(operationType) {
+                case 'set':
+                    newBalance = amount;
+                    break;
+                case 'add':
+                    newBalance = currentBalance + amount;
+                    break;
+                case 'subtract':
+                    newBalance = currentBalance - amount;
+                    if (newBalance < 0) {
+                        showNotification('Bakiye sıfırın altına düşemez!', 'error');
+                        return;
+                    }
+                    break;
+            }
+            
+            const operationText = operationType === 'set' ? 'ayarlamak' : 
+                                operationType === 'add' ? 'eklemek' : 'düşmek';
+            
+            if (!confirm(`${username} kullanıcısının bakiyesini ₺${newBalance.toLocaleString('tr-TR')} olarak ${operationText} istediğinizden emin misiniz?`)) {
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('user_id', userId);
+                formData.append('operation_type', operationType);
+                formData.append('amount', amount);
+                formData.append('new_balance', newBalance);
+                if (description) {
+                    formData.append('description', description);
+                }
+                
+                const response = await fetch('backend/admin/users.php?action=update_balance', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(`${username} kullanıcısının bakiyesi başarıyla güncellendi!`, 'success');
+                    
+                    // Detayları göster
+                    const changeAmount = newBalance - currentBalance;
+                    const changeSign = changeAmount >= 0 ? '+' : '';
+                    showNotification(
+                        `✅ ${username}: ₺${currentBalance.toLocaleString('tr-TR')} → ₺${newBalance.toLocaleString('tr-TR')} (${changeSign}₺${Math.abs(changeAmount).toLocaleString('tr-TR')})`,
+                        'success'
+                    );
+                    
+                    // Modal'ı kapat
+                    const modals = document.querySelectorAll('.modal');
+                    modals.forEach(modal => modal.remove());
+                    
+                    // Kullanıcı listesini ve dashboard'u yenile
+                    loadUsers();
+                    loadDashboard();
+                    
+                } else {
+                    showNotification('Hata: ' + (data.error || 'Bakiye güncellenemedi'), 'error');
+                }
+                
+            } catch (error) {
+                console.error('Bakiye güncelleme hatası:', error);
+                showNotification('Bakiye güncellenirken hata oluştu: ' + error.message, 'error');
             }
         }
 

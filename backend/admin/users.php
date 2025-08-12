@@ -205,6 +205,92 @@ switch ($action) {
         }
         break;
         
+    case 'update_balance':
+        try {
+            $user_id = $_POST['user_id'] ?? 0;
+            $operation_type = $_POST['operation_type'] ?? 'set';
+            $amount = floatval($_POST['amount'] ?? 0);
+            $new_balance = floatval($_POST['new_balance'] ?? 0);
+            $description = $_POST['description'] ?? '';
+            
+            if (empty($user_id) || $amount < 0) {
+                echo json_encode(['success' => false, 'error' => 'Geçersiz parametreler']);
+                break;
+            }
+            
+            // Kullanıcıyı kontrol et
+            $sql = "SELECT id, username, balance FROM users WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$user_id]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$user) {
+                echo json_encode(['success' => false, 'error' => 'Kullanıcı bulunamadı']);
+                break;
+            }
+            
+            $old_balance = floatval($user['balance']);
+            
+            // Bakiyeyi güncelle
+            $sql = "UPDATE users SET balance = ? WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $result = $stmt->execute([$new_balance, $user_id]);
+            
+            if ($result) {
+                // İşlem geçmişi kaydet
+                $islem_detayi = "Admin bakiye güncellemesi: ";
+                switch($operation_type) {
+                    case 'set':
+                        $islem_detayi .= "Bakiye {$old_balance} TL'den {$new_balance} TL'ye ayarlandı";
+                        break;
+                    case 'add':
+                        $islem_detayi .= "{$amount} TL eklendi ({$old_balance} → {$new_balance})";
+                        break;
+                    case 'subtract':
+                        $islem_detayi .= "{$amount} TL düşüldü ({$old_balance} → {$new_balance})";
+                        break;
+                }
+                if ($description) {
+                    $islem_detayi .= " - Açıklama: " . $description;
+                }
+                
+                // Kullanıcı işlem geçmişine kaydet
+                $sql = "INSERT INTO kullanici_islem_gecmisi (user_id, islem_tipi, islem_detayi, tutar, tarih) 
+                        VALUES (?, 'admin_bakiye_guncelleme', ?, ?, NOW())";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([$user_id, $islem_detayi, $new_balance - $old_balance]);
+                
+                // Admin log kaydet
+                try {
+                    $sql = "INSERT INTO admin_islem_loglari (admin_id, islem_tipi, hedef_id, islem_detayi, tarih) 
+                            VALUES (?, 'bakiye_guncelleme', ?, ?, NOW())";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->execute([$_SESSION['user_id'] ?? 1, $user_id, $islem_detayi]);
+                } catch (Exception $e) {
+                    // Admin log tablosu yoksa sessizce geç
+                }
+                
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Bakiye başarıyla güncellendi',
+                    'data' => [
+                        'user_id' => $user_id,
+                        'username' => $user['username'],
+                        'old_balance' => $old_balance,
+                        'new_balance' => $new_balance,
+                        'operation_type' => $operation_type,
+                        'amount' => $amount
+                    ]
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Bakiye güncellenemedi']);
+            }
+            
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => 'Bakiye güncelleme hatası: ' . $e->getMessage()]);
+        }
+        break;
+        
     default:
         echo json_encode(['error' => 'Geçersiz işlem']);
         break;
