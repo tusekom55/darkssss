@@ -22,8 +22,8 @@ $user_id = $_SESSION['user_id'];
 $action = $_GET['action'] ?? '';
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Config.php'deki db_connect fonksiyonunu kullan
+    $pdo = db_connect();
     
     // Withdrawals tablosunu kontrol et ve oluştur
     $checkTable = $pdo->query("SHOW TABLES LIKE 'withdrawals'");
