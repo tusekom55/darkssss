@@ -2362,9 +2362,9 @@
             try {
                 const formData = new FormData();
                 formData.append('withdrawal_id', withdrawalId);
-                formData.append('action', 'approve');
+                formData.append('aciklama', 'Admin tarafından onaylandı');
                 
-                const response = await fetch('backend/admin/withdrawals.php', {
+                const response = await fetch('backend/admin/withdrawals.php?action=approve', {
                     method: 'POST',
                     body: formData
                 });
@@ -2400,16 +2400,15 @@
 
         // Reject withdrawal
         async function rejectWithdrawal(withdrawalId) {
-            if (!confirm('Bu para çekme talebini reddetmek istediğinizden emin misiniz?')) {
-                return;
-            }
+            const aciklama = prompt('Red sebebini girin:');
+            if (!aciklama) return;
             
             try {
                 const formData = new FormData();
                 formData.append('withdrawal_id', withdrawalId);
-                formData.append('action', 'reject');
+                formData.append('aciklama', aciklama);
                 
-                const response = await fetch('backend/admin/withdrawals.php', {
+                const response = await fetch('backend/admin/withdrawals.php?action=reject', {
                     method: 'POST',
                     body: formData
                 });
