@@ -24,6 +24,10 @@ try {
 
 $action = $_GET['action'] ?? '';
 
+// Database bağlantısını kur - MySQLi connection kullanılıyor  
+// (Bu dosya MySQLi syntax kullanıyor, diğer dosyalar PDO kullanıyor)
+require_once __DIR__ . '/../config.php';
+
 try {
     switch ($action) {
         case 'test':

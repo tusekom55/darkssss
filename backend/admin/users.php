@@ -57,6 +57,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $action = $_GET['action'] ?? '';
 
+// Database bağlantısını kur
+$conn = db_connect();
+
 switch ($action) {
     case 'list':
         // Tüm kullanıcıları listele
@@ -206,4 +209,4 @@ switch ($action) {
         echo json_encode(['error' => 'Geçersiz işlem']);
         break;
 }
-?> 
+?>
