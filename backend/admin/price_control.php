@@ -93,6 +93,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $priceManager = new PriceManager();
     
     switch ($action) {
+        case 'add_manual_coin':
+            $coin_name = trim($_POST['coin_name'] ?? '');
+            $coin_code = strtoupper(trim($_POST['coin_code'] ?? ''));
+            $initial_price = floatval($_POST['initial_price'] ?? 0);
+            
+            // Validasyon
+            if (empty($coin_name) || empty($coin_code)) {
+                echo json_encode(['success' => false, 'error' => 'Coin adı ve kodu gerekli']);
+                exit;
+            }
+            
+            if ($initial_price <= 0) {
+                echo json_encode(['success' => false, 'error' => 'Geçerli bir başlangıç fiyatı girin']);
+                exit;
+            }
+            
+            if (strlen($coin_code) > 10) {
+                echo json_encode(['success' => false, 'error' => 'Coin kodu 10 karakterden uzun olamaz']);
+                exit;
+            }
+            
+            if (!preg_match('/^[A-Z0-9]+$/', $coin_code)) {
+                echo json_encode(['success' => false, 'error' => 'Coin kodu sadece büyük harf ve rakam içerebilir']);
+                exit;
+            }
+            
+            try {
+                $conn = db_connect();
+                
+                // API coinleri ile çakışma kontrolü
+                $api_coins = ['BTC', 'ETH', 'BNB', 'XRP', 'USDT', 'ADA', 'SOL', 'DOGE', 'MATIC', 'DOT'];
+                if (in_array($coin_code, $api_coins)) {
+                    echo json_encode(['success' => false, 'error' => 'Bu kod API coinleri için ayrılmış']);
+                    exit;
+                }
+                
+                // Coin kodu benzersizlik kontrolü
+                $sql = "SELECT COUNT(*) FROM coins WHERE coin_kodu = ?";
+                $stmt = $conn->prepare($sql);
+                $stmt->execute([$coin_code]);
+                
+                if ($stmt->fetchColumn() > 0) {
+                    echo json_encode(['success' => false, 'error' => 'Bu coin kodu zaten mevcut']);
+                    exit;
+                }
+                
+                // Yeni manual coin ekle
+                $sql = "INSERT INTO coins (coin_adi, coin_kodu, current_price, coin_type, price_source, is_active, created_at) 
+                        VALUES (?, ?, ?, 'manual', 'manual', 1, NOW())";
+                $stmt = $conn->prepare($sql);
+                $result = $stmt->execute([$coin_name, $coin_code, $initial_price]);
+                
+                if ($result) {
+                    // PriceManager'ın manuel coin listesini güncelle
+                    $priceManager->addManualCoin($coin_code);
+                    
+                    echo json_encode([
+                        'success' => true,
+                        'message' => $coin_name . ' (' . $coin_code . ') başarıyla eklendi',
+                        'data' => [
+                            'coin_name' => $coin_name,
+                            'coin_code' => $coin_code,
+                            'initial_price' => $initial_price
+                        ]
+                    ]);
+                } else {
+                    echo json_encode(['success' => false, 'error' => 'Coin eklenemedi']);
+                }
+                exit;
+                
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'error' => 'Veritabanı hatası: ' . $e->getMessage()]);
+                exit;
+            }
+            break;
+
         case 'increase_price':
             $coin_code = trim($_POST['coin_code'] ?? '');
             $increase_percent = floatval($_POST['increase_percent'] ?? 0);
@@ -206,14 +282,37 @@ if (isset($_POST['action']) && $_POST['action'] === 'update_manual_prices') {
 // Coin listesini al
 try {
     $conn = db_connect();
-    $sql = "SELECT id, coin_adi, coin_kodu, current_price, price_change_24h, price_source, last_update 
-            FROM coins 
-            WHERE is_active = 1 
-            ORDER BY 
-                CASE 
-                    WHEN coin_kodu IN ('T', 'SEX', 'TTT') THEN 1 
-                    ELSE 2 
-                END, coin_adi";
+    
+    // coin_type kolonu var mı kontrol et
+    $sql_check = "SHOW COLUMNS FROM coins LIKE 'coin_type'";
+    $stmt_check = $conn->prepare($sql_check);
+    $stmt_check->execute();
+    $has_coin_type = $stmt_check->rowCount() > 0;
+    
+    if ($has_coin_type) {
+        $sql = "SELECT id, coin_adi, coin_kodu, current_price, price_change_24h, price_source, last_update, coin_type
+                FROM coins 
+                WHERE is_active = 1 
+                ORDER BY 
+                    CASE 
+                        WHEN coin_kodu IN ('T', 'SEX', 'TTT') THEN 1 
+                        ELSE 2 
+                    END, coin_adi";
+    } else {
+        $sql = "SELECT id, coin_adi, coin_kodu, current_price, price_change_24h, price_source, last_update,
+                       CASE 
+                           WHEN coin_kodu IN ('T', 'SEX', 'TTT') THEN 'manual'
+                           ELSE 'api'
+                       END as coin_type
+                FROM coins 
+                WHERE is_active = 1 
+                ORDER BY 
+                    CASE 
+                        WHEN coin_kodu IN ('T', 'SEX', 'TTT') THEN 1 
+                        ELSE 2 
+                    END, coin_adi";
+    }
+    
     $stmt = $conn->prepare($sql);
     $stmt->execute();
     $coins = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -378,6 +477,36 @@ try {
 
         <div class="price-controls">
             <div class="control-box">
+                <h3>➕ Yeni Manuel Coin Ekle</h3>
+                <form method="post" id="addCoinForm">
+                    <input type="hidden" name="action" value="add_manual_coin">
+                    
+                    <div class="form-group">
+                        <label>Coin Adı:</label>
+                        <input type="text" name="coin_name" class="form-control" 
+                               placeholder="Örn: Tugay Coin" required maxlength="100">
+                        <small>Maksimum 100 karakter</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Coin Kodu:</label>
+                        <input type="text" name="coin_code" class="form-control" 
+                               placeholder="Örn: TGY" required maxlength="10" style="text-transform: uppercase;">
+                        <small>Sadece büyük harf ve rakam, maksimum 10 karakter</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Başlangıç Fiyatı (₺):</label>
+                        <input type="number" name="initial_price" class="form-control" 
+                               step="0.01" min="0.01" placeholder="Örn: 100.00" required>
+                        <small>Minimum 0.01 TL</small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">➕ Coin Ekle</button>
+                </form>
+            </div>
+
+            <div class="control-box">
                 <h3>📈 Manuel Fiyat Artırma</h3>
                 <form method="post">
                     <input type="hidden" name="action" value="increase_price">
@@ -387,7 +516,7 @@ try {
                         <select name="coin_code" class="form-control" required>
                             <option value="">Coin Seçin...</option>
                             <?php foreach ($coins as $coin): ?>
-                                <?php if (in_array($coin['coin_kodu'], ['T', 'SEX', 'TTT'])): ?>
+                                <?php if ($coin['coin_type'] === 'manual' || in_array($coin['coin_kodu'], ['T', 'SEX', 'TTT'])): ?>
                                     <option value="<?= $coin['coin_kodu'] ?>">
                                         <?= $coin['coin_adi'] ?> (<?= $coin['coin_kodu'] ?>) - ₺<?= number_format($coin['current_price'], 2) ?>
                                     </option>
@@ -406,17 +535,51 @@ try {
                     <button type="submit" class="btn btn-danger">🚀 Fiyatı Artır</button>
                 </form>
             </div>
+        </div>
 
+        <div class="price-controls">
             <div class="control-box">
                 <h3>ℹ️ Sistem Bilgileri</h3>
                 <p><strong>API Coinleri:</strong> BTC, ETH, BNB, XRP, USDT, ADA, SOL, DOGE, MATIC, DOT</p>
-                <p><strong>Manuel Coinler:</strong> T (Tugaycoin), SEX, TTT (Dolar)</p>
+                <p><strong>Manuel Coinler:</strong> 
+                    <?php 
+                    $manual_coins_list = [];
+                    foreach ($coins as $coin) {
+                        if ($coin['coin_type'] === 'manual' || in_array($coin['coin_kodu'], ['T', 'SEX', 'TTT'])) {
+                            $manual_coins_list[] = $coin['coin_kodu'];
+                        }
+                    }
+                    echo implode(', ', $manual_coins_list);
+                    ?>
+                </p>
                 <p><strong>Dalgalanma Aralığı:</strong> -%5 ile +%30</p>
                 <p><strong>Güncelleme Sıklığı:</strong> Her 5 dakika (Cron Job)</p>
                 
                 <div style="margin-top: 15px;">
                     <strong>Son Güncelleme:</strong><br>
                     <span id="lastUpdate"><?= date('d.m.Y H:i:s') ?></span>
+                </div>
+            </div>
+
+            <div class="control-box">
+                <h3>🎯 Coin Durumu</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <strong>Toplam Coin:</strong><br>
+                        <span style="font-size: 24px; color: #007bff;"><?= count($coins) ?></span>
+                    </div>
+                    <div>
+                        <strong>Manuel Coin:</strong><br>
+                        <span style="font-size: 24px; color: #28a745;"><?= count($manual_coins_list) ?></span>
+                    </div>
+                    <div>
+                        <strong>API Coin:</strong><br>
+                        <span style="font-size: 24px; color: #ffc107;"><?= count($coins) - count($manual_coins_list) ?></span>
+                    </div>
+                    <div>
+                        <strong>Aktif Coin:</strong><br>
+                        <span style="font-size: 24px; color: #17a2b8;"><?= count(array_filter($coins, function($c) { return $c['is_active']; })) ?></span>
+                    </div>
                 </div>
             </div>
         </div>

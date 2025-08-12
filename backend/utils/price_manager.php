@@ -14,6 +14,35 @@ class PriceManager {
     
     public function __construct() {
         $this->conn = db_connect();
+        $this->loadManualCoins(); // Manuel coinleri veritabanından yükle
+    }
+    
+    /**
+     * Manuel coinleri veritabanından dinamik olarak yükle
+     */
+    private function loadManualCoins() {
+        try {
+            $sql = "SELECT coin_kodu FROM coins WHERE coin_type = 'manual' AND is_active = 1";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute();
+            $manual_coins_db = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            // Mevcut manuel coinler ile birleştir
+            $this->manual_coins = array_unique(array_merge($this->manual_coins, $manual_coins_db));
+            
+        } catch (Exception $e) {
+            error_log("Manuel coin yükleme hatası: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Yeni manuel coin ekle
+     */
+    public function addManualCoin($coin_code) {
+        if (!in_array($coin_code, $this->manual_coins)) {
+            $this->manual_coins[] = $coin_code;
+            error_log("Yeni manuel coin eklendi: " . $coin_code);
+        }
     }
     
     /**
