@@ -73,7 +73,7 @@ $conn = db_connect();
 
 switch ($action) {
     case 'list':
-        // Coinleri listele
+        // Coinleri listele - sadece manuel coinler
         $sql = "SELECT 
                     c.id, 
                     c.coin_adi, 
@@ -81,9 +81,11 @@ switch ($action) {
                     c.current_price,
                     c.logo_url,
                     c.is_active,
+                    c.coin_type,
                     c.created_at,
                     c.updated_at
                 FROM coins c
+                WHERE c.coin_type = 'manuel'
                 ORDER BY c.created_at DESC";
         
         $stmt = $conn->prepare($sql);
@@ -196,9 +198,9 @@ switch ($action) {
         }
         
         try {
-            // Debug: SQL sorgusunu logla
-            $sql = "INSERT INTO coins (coin_adi, coin_kodu, current_price, logo_url, is_active) 
-                    VALUES (?, ?, ?, ?, 1)";
+            // Debug: SQL sorgusunu logla - manuel coin olarak ekle
+            $sql = "INSERT INTO coins (coin_adi, coin_kodu, current_price, logo_url, coin_type, is_active) 
+                    VALUES (?, ?, ?, ?, 'manuel', 1)";
             error_log("SQL Query: " . $sql);
             error_log("Parameters: " . json_encode([$coin_adi, $coin_kodu, $current_price_to_save, $logo_path]));
             
