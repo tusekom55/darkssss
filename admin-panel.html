@@ -1791,7 +1791,7 @@
                     <tr>
                         <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
                             <i class="fas fa-file-invoice" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i><br>
-                            Henüz fatura oluşturulmamış
+                            Henüz onaylanmış para çekme talebi yok
                         </td>
                     </tr>
                 `;
@@ -1812,9 +1812,15 @@
                     <td>₺${parseFloat(invoice.toplam_tutar).toLocaleString()}</td>
                     <td>${new Date(invoice.tarih).toLocaleDateString('tr-TR')} ${new Date(invoice.tarih).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</td>
                     <td>
-                        <button class="action-btn btn-invoice" onclick="generateInvoice(${invoice.id})" title="Faturayı PDF olarak görüntüle">
-                            <i class="fas fa-file-pdf"></i> Fatura Al
-                        </button>
+                        ${invoice.has_invoice === false ? `
+                            <button class="action-btn btn-invoice" onclick="createInvoiceForWithdrawal(${invoice.user_id}, ${invoice.withdrawal_id}, ${invoice.toplam_tutar})" title="Fatura Oluştur">
+                                <i class="fas fa-file-plus"></i> Fatura Oluştur
+                            </button>
+                        ` : `
+                            <button class="action-btn btn-invoice" onclick="generateInvoice(${invoice.id})" title="Faturayı PDF olarak görüntüle">
+                                <i class="fas fa-file-pdf"></i> Fatura Al
+                            </button>
+                        `}
                     </td>
                 `;
                 tbody.appendChild(row);

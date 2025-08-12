@@ -152,20 +152,60 @@ try {
             break;
             
         case 'list':
-            // Faturalar listesi
+            // Onaylanmış para çekme talepleri için faturalar listesi
             try {
                 global $conn;
                 
-                $sql = "SELECT f.*, u.username 
-                        FROM faturalar f 
-                        JOIN users u ON f.user_id = u.id 
-                        ORDER BY f.tarih DESC";
+                // Onaylanmış para çekme taleplerini ve varsa faturalarını getir
+                $sql = "SELECT 
+                            pct.id as withdrawal_id,
+                            pct.user_id,
+                            pct.tutar,
+                            pct.yontem,
+                            pct.onay_tarihi as tarih,
+                            u.username,
+                            f.id as fatura_id,
+                            f.fatura_no,
+                            f.toplam_tutar,
+                            f.islem_tipi,
+                            COALESCE(f.tarih, pct.onay_tarihi) as fatura_tarihi
+                        FROM para_cekme_talepleri pct
+                        JOIN users u ON pct.user_id = u.id
+                        LEFT JOIN faturalar f ON (f.user_id = pct.user_id AND f.islem_id = pct.id AND f.islem_tipi = 'para_cekme')
+                        WHERE pct.durum = 'onaylandi'
+                        ORDER BY pct.onay_tarihi DESC";
+                
                 $result = $conn->query($sql);
                 
                 $faturalar = [];
                 if ($result) {
                     while ($row = $result->fetch_assoc()) {
-                        $faturalar[] = $row;
+                        // Eğer fatura yoksa, para çekme bilgilerini fatura formatında göster
+                        if (!$row['fatura_id']) {
+                            $faturalar[] = [
+                                'id' => null,
+                                'fatura_no' => 'PÇ-' . str_pad($row['withdrawal_id'], 6, '0', STR_PAD_LEFT),
+                                'username' => $row['username'],
+                                'islem_tipi' => 'para_cekme',
+                                'toplam_tutar' => $row['tutar'],
+                                'tarih' => $row['tarih'],
+                                'withdrawal_id' => $row['withdrawal_id'],
+                                'user_id' => $row['user_id'],
+                                'has_invoice' => false
+                            ];
+                        } else {
+                            $faturalar[] = [
+                                'id' => $row['fatura_id'],
+                                'fatura_no' => $row['fatura_no'],
+                                'username' => $row['username'],
+                                'islem_tipi' => $row['islem_tipi'],
+                                'toplam_tutar' => $row['toplam_tutar'],
+                                'tarih' => $row['fatura_tarihi'],
+                                'withdrawal_id' => $row['withdrawal_id'],
+                                'user_id' => $row['user_id'],
+                                'has_invoice' => true
+                            ];
+                        }
                     }
                 }
                 
