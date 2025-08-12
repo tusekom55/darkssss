@@ -69,8 +69,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 $action = $_GET['action'] ?? '';
 
+// Debug: Action parametresini logla
+error_log("Coins.php - Received action: " . $action);
+error_log("Coins.php - GET params: " . print_r($_GET, true));
+
 // Database bağlantısını kur
 $conn = db_connect();
+
+if (!$conn) {
+    error_log("Coins.php - Database connection failed");
+    echo json_encode(['error' => 'Veritabanı bağlantısı kurulamadı']);
+    exit;
+}
 
 switch ($action) {
     case 'list':
