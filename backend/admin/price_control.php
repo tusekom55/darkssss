@@ -41,9 +41,24 @@ if (isset($_GET['action'])) {
                 
                 // Kaynak bilgisini düzenle
                 foreach ($coins as &$coin) {
-                    if (in_array($coin['coin_kodu'], ['T', 'SEX', 'TTT'])) {
+                    // Önce coin_type alanını kontrol et
+                    if (isset($coin['coin_type']) && $coin['coin_type'] === 'manual') {
                         $coin['kaynak'] = 'Manuel';
-                    } else {
+                    } 
+                    // Sonra price_source alanını kontrol et
+                    else if (isset($coin['price_source']) && $coin['price_source'] === 'manuel') {
+                        $coin['kaynak'] = 'Manuel';
+                    }
+                    // Hard-coded manuel coinler (backward compatibility)
+                    else if (in_array($coin['coin_kodu'], ['T', 'SEX', 'TTT'])) {
+                        $coin['kaynak'] = 'Manuel';
+                    } 
+                    // Admin tarafından fiyat değiştirilen coinler
+                    else if (isset($coin['price_source']) && $coin['price_source'] === 'admin') {
+                        $coin['kaynak'] = 'Admin';
+                    }
+                    // Diğerleri API
+                    else {
                         $coin['kaynak'] = 'API';
                     }
                     
@@ -648,13 +663,27 @@ try {
                         </td>
                         <td>
                             <?php 
-                            $source = $coin['price_source'] ?? 'manual';
-                            $sourceClass = 'source-' . $source;
-                            $sourceText = [
-                                'api' => 'API',
-                                'manual' => 'Manuel',
-                                'admin' => 'Admin'
-                            ][$source] ?? 'Manuel';
+                            // Kaynak belirleme (API response ile aynı mantık)
+                            if (isset($coin['coin_type']) && $coin['coin_type'] === 'manual') {
+                                $sourceText = 'Manuel';
+                                $sourceClass = 'source-manual';
+                            } 
+                            else if (isset($coin['price_source']) && $coin['price_source'] === 'manuel') {
+                                $sourceText = 'Manuel';
+                                $sourceClass = 'source-manual';
+                            }
+                            else if (in_array($coin['coin_kodu'], ['T', 'SEX', 'TTT'])) {
+                                $sourceText = 'Manuel';
+                                $sourceClass = 'source-manual';
+                            } 
+                            else if (isset($coin['price_source']) && $coin['price_source'] === 'admin') {
+                                $sourceText = 'Admin';
+                                $sourceClass = 'source-admin';
+                            }
+                            else {
+                                $sourceText = 'API';
+                                $sourceClass = 'source-api';
+                            }
                             ?>
                             <span class="price-source <?= $sourceClass ?>"><?= $sourceText ?></span>
                         </td>
