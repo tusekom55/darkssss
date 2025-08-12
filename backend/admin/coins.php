@@ -300,49 +300,6 @@ switch ($action) {
         }
         break;
         
-    case 'update':
-        // Coin güncelle
-        $id = intval($_POST['id'] ?? 0);
-        $coin_adi = $_POST['coin_adi'] ?? '';
-        $coin_kodu = strtoupper($_POST['coin_kodu'] ?? '');
-        $current_price = floatval($_POST['current_price'] ?? 0);
-        
-        if ($id <= 0 || empty($coin_adi) || empty($coin_kodu) || $current_price <= 0) {
-            echo json_encode(['error' => 'Tüm gerekli alanları doldurunuz']);
-            exit;
-        }
-        
-        try {
-            $sql = "UPDATE coins SET 
-                        coin_adi = ?, 
-                        coin_kodu = ?, 
-                        current_price = ?,
-                        updated_at = NOW()
-                    WHERE id = ?";
-            $stmt = $conn->prepare($sql);
-            $result = $stmt->execute([$coin_adi, $coin_kodu, $current_price, $id]);
-            
-            if ($result) {
-                // Admin log kaydı
-                $log_sql = "INSERT INTO admin_islem_loglari 
-                           (admin_id, islem_tipi, hedef_id, islem_detayi) 
-                           VALUES (?, 'coin_duzenleme', ?, ?)";
-                $log_stmt = $conn->prepare($log_sql);
-                $log_stmt->execute([
-                    $_SESSION['user_id'] ?? 1,
-                    $id, 
-                    "Coin güncellendi: {$coin_adi} ({$coin_kodu}) - ₺{$current_price}"
-                ]);
-                
-                echo json_encode(['success' => true, 'message' => 'Coin başarıyla güncellendi']);
-            } else {
-                echo json_encode(['error' => 'Coin güncellenemedi']);
-            }
-        } catch (Exception $e) {
-            echo json_encode(['error' => 'Veritabanı hatası: ' . $e->getMessage()]);
-        }
-        break;
-        
     case 'detail':
         // Coin detayları
         $id = intval($_GET['coin_id'] ?? 0);
@@ -434,8 +391,7 @@ switch ($action) {
                         coin_adi = ?, 
                         coin_kodu = ?, 
                         current_price = ?, 
-                        is_active = ?,
-                        updated_at = NOW() 
+                        is_active = ?
                     WHERE id = ?";
             $stmt = $conn->prepare($sql);
             $result = $stmt->execute([$coin_adi, $coin_kodu, $current_price, $is_active, $id]);
