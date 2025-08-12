@@ -1088,10 +1088,6 @@
                                     </div>
                                 </div>
                                 <div class="form-group" style="grid-column: 1 / -1;">
-                                    <label class="form-label">Açıklama:</label>
-                                    <textarea id="coin-description" class="form-textarea" placeholder="Coin hakkında açıklama..." rows="3"></textarea>
-                                </div>
-                                <div class="form-group" style="grid-column: 1 / -1;">
                                     <button type="submit" class="btn-primary">
                                         <i class="fas fa-plus"></i> Coin Ekle
                                     </button>
@@ -3426,7 +3422,6 @@
             const coingeckoId = document.getElementById('coingecko-id').value.trim();
             const coinPrice = parseFloat(document.getElementById('coin-price').value);
             const coinCategory = document.getElementById('coin-category').value;
-            const coinDescription = document.getElementById('coin-description').value.trim();
             const coinLogo = document.getElementById('coin-logo').files[0];
 
             if (!coinName || !coinSymbol || !coinPrice) {
@@ -3458,7 +3453,6 @@
                 formData.append('coin_adi', coinName);
                 formData.append('coin_kodu', coinSymbol);
                 formData.append('current_price', coinPrice);
-                formData.append('aciklama', coinDescription);
                 if (coingeckoId) {
                     formData.append('coingecko_id', coingeckoId);
                 }

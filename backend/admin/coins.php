@@ -79,7 +79,6 @@ switch ($action) {
                     c.coin_adi, 
                     c.coin_kodu, 
                     c.current_price,
-                    c.aciklama,
                     c.logo_url,
                     c.is_active,
                     c.created_at,
@@ -112,7 +111,6 @@ switch ($action) {
         $coin_kodu = strtoupper($_POST['coin_kodu'] ?? '');
         $current_price = floatval($_POST['current_price'] ?? 0);
         $currency = $_POST['coin_currency'] ?? 'TRY'; // Para birimi (TRY veya USD)
-        $aciklama = $_POST['aciklama'] ?? '';
         $kategori_id = $_POST['kategori_id'] ?? null;
         
         // Dinamik kur sistemi
@@ -201,13 +199,13 @@ switch ($action) {
         
         try {
             // Debug: SQL sorgusunu logla
-            $sql = "INSERT INTO coins (coin_adi, coin_kodu, current_price, aciklama, kategori_id, logo_url, is_active) 
-                    VALUES (?, ?, ?, ?, ?, ?, 1)";
+            $sql = "INSERT INTO coins (coin_adi, coin_kodu, current_price, kategori_id, logo_url, is_active) 
+                    VALUES (?, ?, ?, ?, ?, 1)";
             error_log("SQL Query: " . $sql);
-            error_log("Parameters: " . json_encode([$coin_adi, $coin_kodu, $current_price, $aciklama, $kategori_id, $logo_path]));
+            error_log("Parameters: " . json_encode([$coin_adi, $coin_kodu, $current_price_to_save, $kategori_id, $logo_path]));
             
             $stmt = $conn->prepare($sql);
-            $result = $stmt->execute([$coin_adi, $coin_kodu, $current_price_to_save, $aciklama, $kategori_id, $logo_path]);
+            $result = $stmt->execute([$coin_adi, $coin_kodu, $current_price_to_save, $kategori_id, $logo_path]);
             
             if ($result) {
                 $coin_id = $conn->lastInsertId();
