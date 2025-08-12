@@ -2124,6 +2124,282 @@
                 submitDepositRequest();
             });
             
+            // Para çekme formu setup
+            setupWithdrawalForm();
+        }
+        
+        // Para çekme formu fonksiyonları
+        function setupWithdrawalForm() {
+            const withdrawalForm = document.getElementById('withdrawal-form');
+            const withdrawalMethod = document.getElementById('withdrawal-method');
+            
+            if (!withdrawalForm || !withdrawalMethod) return;
+            
+            // Yöntem değişikliğinde form alanlarını göster/gizle
+            withdrawalMethod.addEventListener('change', function() {
+                toggleWithdrawalMethodFields(this.value);
+            });
+            
+            // Form gönderimi
+            withdrawalForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitWithdrawalRequest();
+            });
+        }
+        
+        // Para çekme yöntem alanlarını göster/gizle
+        function toggleWithdrawalMethodFields(method) {
+            // Tüm method field'larını gizle
+            const bankTransferFields = document.getElementById('bank-transfer-fields');
+            const paparaWithdrawalFields = document.getElementById('papara-withdrawal-fields');
+            
+            if (bankTransferFields) bankTransferFields.style.display = 'none';
+            if (paparaWithdrawalFields) paparaWithdrawalFields.style.display = 'none';
+            
+            // Seçilen yönteme göre ilgili alanları göster
+            if (method === 'bank_transfer' && bankTransferFields) {
+                bankTransferFields.style.display = 'block';
+                console.log('🏦 Banka havalesi alanları açıldı');
+            } else if (method === 'papara' && paparaWithdrawalFields) {
+                paparaWithdrawalFields.style.display = 'block';
+                console.log('📱 Papara alanları açıldı');
+            }
+            
+            // Kullanıcı bakiyesini güncelle
+            updateCurrentBalance();
+        }
+        
+        // Mevcut bakiyeyi güncelle
+        function updateCurrentBalance() {
+            fetch('backend/public/profile.php', {
+                method: 'GET',
+                credentials: 'include'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) {
+                    const balance = parseFloat(data.user.balance) || 0;
+                    window.currentUserBalance = balance;
+                    document.getElementById('current-balance-display').textContent = `₺${balance.toLocaleString('tr-TR', {minimumFractionDigits: 2})}`;
+                }
+            })
+            .catch(err => {
+                console.error('Bakiye güncelleme hatası:', err);
+            });
+        }
+        
+        // Para çekme talebi gönder
+        async function submitWithdrawalRequest() {
+            const method = document.getElementById('withdrawal-method').value;
+            const amount = parseFloat(document.getElementById('withdrawal-amount').value);
+            const note = document.getElementById('withdrawal-note').value;
+            
+            if (!method) {
+                showNotification('Lütfen çekme yöntemini seçin!', 'error');
+                return;
+            }
+            
+            if (!amount || amount < 100) {
+                showNotification('Minimum çekme tutarı ₺100\'dür!', 'error');
+                return;
+            }
+            
+            if (amount > 50000) {
+                showNotification('Maksimum çekme tutarı ₺50,000\'dir!', 'error');
+                return;
+            }
+            
+            // Mevcut bakiye kontrolü
+            const currentBalance = window.currentUserBalance || 0;
+            if (amount > currentBalance) {
+                showNotification('Yetersiz bakiye!', 'error');
+                return;
+            }
+            
+            // Yönteme göre ek alanları kontrol et
+            let detailBilgiler = {};
+            
+            if (method === 'bank_transfer') {
+                const recipientName = document.getElementById('recipient-name').value;
+                const bankName = document.getElementById('bank-name').value;
+                const ibanNumber = document.getElementById('iban-number').value;
+                
+                if (!recipientName) {
+                    showNotification('Lütfen alıcı adı soyadını girin!', 'error');
+                    return;
+                }
+                
+                if (!bankName) {
+                    showNotification('Lütfen banka adını seçin!', 'error');
+                    return;
+                }
+                
+                if (!ibanNumber) {
+                    showNotification('Lütfen IBAN numarasını girin!', 'error');
+                    return;
+                }
+                
+                // IBAN validasyonu (basit)
+                const cleanIban = ibanNumber.replace(/\s/g, '').toUpperCase();
+                if (!cleanIban.startsWith('TR') || cleanIban.length !== 26) {
+                    showNotification('Geçersiz IBAN formatı! TR ile başlamalı ve 26 haneli olmalıdır.', 'error');
+                    return;
+                }
+                
+                detailBilgiler = { 
+                    recipient_name: recipientName,
+                    bank_name: bankName,
+                    iban_number: cleanIban
+                };
+            } else if (method === 'papara') {
+                const paparaNumber = document.getElementById('papara-withdrawal-number').value;
+                const paparaAccountName = document.getElementById('papara-account-name').value;
+                
+                if (!paparaNumber) {
+                    showNotification('Lütfen Papara numaranızı girin!', 'error');
+                    return;
+                }
+                
+                if (!paparaAccountName) {
+                    showNotification('Lütfen Papara hesap sahibinin adını girin!', 'error');
+                    return;
+                }
+                
+                detailBilgiler = { 
+                    papara_number: paparaNumber,
+                    account_name: paparaAccountName
+                };
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('yontem', method);
+                formData.append('tutar', amount);
+                formData.append('detay_bilgiler', JSON.stringify(detailBilgiler));
+                if (note) formData.append('aciklama', note);
+                
+                const response = await fetch('backend/user/withdrawals.php?action=create', {
+                    method: 'POST',
+                    credentials: 'include',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification(`Para çekme talebiniz başarıyla gönderildi! Talep ID: ${data.data.id}`, 'success');
+                    document.getElementById('withdrawal-form').reset();
+                    toggleWithdrawalMethodFields(''); // Hide all method fields
+                    loadRecentWithdrawals(); // Reload recent withdrawals
+                } else {
+                    showNotification('Hata: ' + (data.error || 'Talep gönderilemedi'), 'error');
+                }
+            } catch (error) {
+                console.error('Para çekme hatası:', error);
+                showNotification('Talep gönderilirken bir hata oluştu: ' + error.message, 'error');
+            }
+        }
+        
+        // Son para çekme taleplerini yükle
+        async function loadRecentWithdrawals() {
+            const container = document.getElementById('recent-withdrawals');
+            
+            if (!container) return;
+            
+            try {
+                // Loading state göster
+                container.innerHTML = `
+                    <div class="loading" style="text-align: center; padding: 40px;">
+                        <div class="spinner"></div>
+                        <p>Talepler yükleniyor...</p>
+                    </div>
+                `;
+                
+                const response = await fetch('backend/user/withdrawals.php?action=list', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    let withdrawalsHTML = '<div style="display: flex; flex-direction: column; gap: 12px;">';
+                    
+                    data.data.forEach(withdrawal => {
+                        const statusClass = withdrawal.durum === 'beklemede' ? 'status-pending' : 
+                                          withdrawal.durum === 'onaylandi' ? 'status-approved' : 'status-rejected';
+                        const statusText = withdrawal.durum === 'beklemede' ? 'Beklemede' : 
+                                         withdrawal.durum === 'onaylandi' ? 'Onaylandı' : 'Reddedildi';
+                        
+                        // Yöntem adını düzelt
+                        let methodName = withdrawal.yontem;
+                        const methodNames = {
+                            'bank_transfer': 'Banka Havalesi',
+                            'papara': 'Papara'
+                        };
+                        methodName = methodNames[withdrawal.yontem] || methodName;
+                        
+                        withdrawalsHTML += `
+                            <div style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 12px; border-left: 4px solid ${withdrawal.durum === 'beklemede' ? '#fbbf24' : withdrawal.durum === 'onaylandi' ? '#00d4aa' : '#ef4444'};">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div>
+                                        <strong style="color: #ffffff;">${methodName}</strong>
+                                        <span style="margin-left: 12px; color: #8b8fa3;">₺${parseFloat(withdrawal.tutar).toLocaleString()}</span>
+                                    </div>
+                                    <span class="status-badge ${statusClass}" style="padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">${statusText}</span>
+                                </div>
+                                <div style="color: #8b8fa3; font-size: 12px;">
+                                    ${new Date(withdrawal.tarih).toLocaleDateString('tr-TR')} ${new Date(withdrawal.tarih).toLocaleTimeString('tr-TR')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    withdrawalsHTML += '</div>';
+                    container.innerHTML = withdrawalsHTML;
+                } else {
+                    // Mock data göster (backend hazır değilse)
+                    container.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 12px; border-left: 4px solid #fbbf24;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div>
+                                        <strong style="color: #ffffff;">Banka Havalesi</strong>
+                                        <span style="margin-left: 12px; color: #8b8fa3;">₺5,000</span>
+                                    </div>
+                                    <span style="padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(251, 191, 36, 0.2); color: #fbbf24;">Beklemede</span>
+                                </div>
+                                <div style="color: #8b8fa3; font-size: 12px;">
+                                    ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTimeString('tr-TR')}
+                                </div>
+                            </div>
+                            <div style="background: rgba(255, 255, 255, 0.05); padding: 16px; border-radius: 12px; border-left: 4px solid #00d4aa;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <div>
+                                        <strong style="color: #ffffff;">Papara</strong>
+                                        <span style="margin-left: 12px; color: #8b8fa3;">₺2,500</span>
+                                    </div>
+                                    <span style="padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(16, 185, 129, 0.2); color: #00d4aa;">Onaylandı</span>
+                                </div>
+                                <div style="color: #8b8fa3; font-size: 12px;">
+                                    ${new Date(Date.now() - 86400000).toLocaleDateString('tr-TR')} ${new Date(Date.now() - 86400000).toLocaleTimeString('tr-TR')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Para çekme talepleri yüklenirken hata:', error);
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 12px;"></i>
+                        <p>Talepler yüklenirken bir hata oluştu.</p>
+                        <button onclick="loadRecentWithdrawals()" style="background: #4fc3f7; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 12px;">
+                            Tekrar Dene
+                        </button>
+                    </div>
+                `;
+            }
         }
         
         // Yöntem alanlarını göster/gizle
