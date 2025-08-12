@@ -50,6 +50,34 @@ try {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
         ";
         $pdo->exec($createTable);
+    } else {
+        // Tablo varsa eksik kolonları kontrol et ve ekle
+        $columns = $pdo->query("SHOW COLUMNS FROM para_cekme_talepleri")->fetchAll(PDO::FETCH_COLUMN);
+        
+        if (!in_array('banka_adi', $columns)) {
+            $pdo->exec("ALTER TABLE para_cekme_talepleri ADD COLUMN banka_adi VARCHAR(100) AFTER tutar");
+        }
+        if (!in_array('iban', $columns)) {
+            $pdo->exec("ALTER TABLE para_cekme_talepleri ADD COLUMN iban VARCHAR(50) AFTER banka_adi");
+        }
+        if (!in_array('hesap_sahibi', $columns)) {
+            $pdo->exec("ALTER TABLE para_cekme_talepleri ADD COLUMN hesap_sahibi VARCHAR(100) AFTER iban");
+        }
+        if (!in_array('papara_no', $columns)) {
+            $pdo->exec("ALTER TABLE para_cekme_talepleri ADD COLUMN papara_no VARCHAR(50) AFTER hesap_sahibi");
+        }
+        if (!in_array('detay_bilgiler', $columns)) {
+            $pdo->exec("ALTER TABLE para_cekme_talepleri ADD COLUMN detay_bilgiler TEXT AFTER papara_no");
+        }
+        if (!in_array('onay_tarihi', $columns)) {
+            $pdo->exec("ALTER TABLE para_cekme_talepleri ADD COLUMN onay_tarihi TIMESTAMP NULL AFTER tarih");
+        }
+        if (!in_array('onaylayan_admin_id', $columns)) {
+            $pdo->exec("ALTER TABLE para_cekme_talepleri ADD COLUMN onaylayan_admin_id INT NULL AFTER onay_tarihi");
+        }
+        if (!in_array('admin_aciklama', $columns)) {
+            $pdo->exec("ALTER TABLE para_cekme_talepleri ADD COLUMN admin_aciklama TEXT AFTER onaylayan_admin_id");
+        }
     }
 
     switch ($action) {
