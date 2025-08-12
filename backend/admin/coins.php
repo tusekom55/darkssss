@@ -113,24 +113,11 @@ switch ($action) {
         $currency = $_POST['coin_currency'] ?? 'TRY'; // Para birimi (TRY veya USD)
         $kategori_id = $_POST['kategori_id'] ?? null;
         
-        // Dinamik kur sistemi
-        require_once __DIR__ . '/../utils/currency.php';
-        
-        // Eğer coin API aktifse (coingecko_id varsa) USD olarak sakla
-        // Manuel coinlerse TL olarak sakla
+        // Manuel coin olarak direkt TL cinsinden sakla
         $coingecko_id = $_POST['coingecko_id'] ?? '';
-        $api_aktif = !empty($coingecko_id) ? 1 : 0;
+        $current_price_to_save = $current_price; // TL cinsinden sakla
         
-        if ($api_aktif) {
-            // API coin - USD olarak sakla (API'den güncel fiyat gelecek)
-            $current_price_to_save = $current_price; // USD cinsinden
-            error_log("API Coin - USD fiyat saklanıyor: {$current_price_to_save}");
-        } else {
-            // Manuel coin - TL olarak girildi, USD'ye çevir ve sakla
-            $usd_try_rate = getUsdTryRate();
-            $current_price_to_save = $current_price / $usd_try_rate; // TL'den USD'ye çevir
-            error_log("Manuel Coin - TL: {$current_price}, USD: {$current_price_to_save}, Kur: {$usd_try_rate}");
-        }
+        error_log("Manuel Coin - TL: {$current_price}");
         
         // Debug: Değişkenleri logla
         error_log("Coin Adi: " . $coin_adi);
