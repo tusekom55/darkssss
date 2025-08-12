@@ -195,14 +195,16 @@ class PriceManager {
             $multiplier = 1 + ($increase_percent / 100);
             $new_price = $current_price * $multiplier;
             
+            // price_change_24h'ı da artırma yüzdesi olarak güncelle
             $result = $this->updateCoinPrice($coin_code, $new_price, 'admin', $increase_percent);
             
             if ($result) {
                 return [
                     'success' => true,
-                    'message' => "{$coin_code} fiyatı %{$increase_percent} artırıldı",
+                    'message' => "{$coin_code} fiyatı %{$increase_percent} artırıldı (24s değişim: +%{$increase_percent})",
                     'old_price' => $current_price,
-                    'new_price' => $new_price
+                    'new_price' => $new_price,
+                    'price_change_24h' => $increase_percent
                 ];
             } else {
                 return ['success' => false, 'message' => 'Fiyat güncellenemedi'];

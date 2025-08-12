@@ -234,8 +234,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $conn = db_connect();
                 
-                // Mevcut fiyatı al
-                $sql = "SELECT coin_adi, current_price FROM coins WHERE coin_kodu = ? AND is_active = 1";
+                // Mevcut fiyat ve price_change_24h'ı al
+                $sql = "SELECT coin_adi, current_price, price_change_24h FROM coins WHERE coin_kodu = ? AND is_active = 1";
                 $stmt = $conn->prepare($sql);
                 $stmt->execute([$coin_code]);
                 $coin = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -249,23 +249,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $increase_amount = $old_price * ($increase_percent / 100);
                 $new_price = $old_price + $increase_amount;
                 
-                // Fiyatı güncelle
+                // Yeni price_change_24h hesapla
+                // Admin artırması = anlık yüzde değişimi olarak gösterelim
+                $new_price_change_24h = $increase_percent;
+                
+                // Fiyat ve yüzde değişimini güncelle
                 $sql = "UPDATE coins SET 
                         current_price = ?, 
+                        price_change_24h = ?,
                         price_source = 'admin',
                         last_update = NOW() 
                         WHERE coin_kodu = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->execute([$new_price, $coin_code]);
+                $stmt->execute([$new_price, $new_price_change_24h, $coin_code]);
                 
                 echo json_encode([
                     'success' => true,
-                    'message' => $coin['coin_adi'] . ' fiyatı %' . $increase_percent . ' artırıldı',
+                    'message' => $coin['coin_adi'] . ' fiyatı %' . $increase_percent . ' artırıldı (24s değişim: +%' . $increase_percent . ')',
                     'details' => [
                         'coin_name' => $coin['coin_adi'],
                         'old_price' => $old_price,
                         'new_price' => $new_price,
-                        'increase_percent' => $increase_percent
+                        'increase_percent' => $increase_percent,
+                        'new_price_change_24h' => $new_price_change_24h
                     ]
                 ]);
                 exit;
