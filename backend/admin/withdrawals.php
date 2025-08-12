@@ -54,14 +54,24 @@ switch ($action) {
         $withdrawal_id = $_POST['withdrawal_id'] ?? $_GET['withdrawal_id'] ?? 0;
         $aciklama = $_POST['aciklama'] ?? $_GET['aciklama'] ?? '';
         
-        // Talebi getir
-        $sql = "SELECT * FROM para_cekme_talepleri WHERE id = ? AND durum = 'beklemede'";
+        // Önce talebi kontrol et (durum kontrolü olmadan)
+        $sql = "SELECT * FROM para_cekme_talepleri WHERE id = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$withdrawal_id]);
         $withdrawal = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$withdrawal) {
-            echo json_encode(['error' => 'Talep bulunamadı veya zaten işlenmiş']);
+            echo json_encode(['error' => 'Talep bulunamadı (ID: ' . $withdrawal_id . ')']);
+            exit;
+        }
+        
+        // Durum kontrolü
+        if ($withdrawal['durum'] !== 'beklemede') {
+            echo json_encode([
+                'error' => 'Talep zaten işlenmiş', 
+                'current_status' => $withdrawal['durum'],
+                'withdrawal_data' => $withdrawal
+            ]);
             exit;
         }
         
