@@ -50,9 +50,9 @@ switch ($action) {
         break;
         
     case 'approve':
-        // Para çekme talebini onayla
-        $withdrawal_id = $_POST['withdrawal_id'] ?? 0;
-        $aciklama = $_POST['aciklama'] ?? '';
+        // Para çekme talebini onayla (GET ve POST destekli)
+        $withdrawal_id = $_POST['withdrawal_id'] ?? $_GET['withdrawal_id'] ?? 0;
+        $aciklama = $_POST['aciklama'] ?? $_GET['aciklama'] ?? '';
         
         // Talebi getir
         $sql = "SELECT * FROM para_cekme_talepleri WHERE id = ? AND durum = 'beklemede'";
@@ -122,9 +122,9 @@ switch ($action) {
         break;
         
     case 'reject':
-        // Para çekme talebini reddet
-        $withdrawal_id = $_POST['withdrawal_id'] ?? 0;
-        $aciklama = $_POST['aciklama'] ?? '';
+        // Para çekme talebini reddet (GET ve POST destekli)
+        $withdrawal_id = $_POST['withdrawal_id'] ?? $_GET['withdrawal_id'] ?? 0;
+        $aciklama = $_POST['aciklama'] ?? $_GET['aciklama'] ?? '';
         
         // Talebi getir
         $sql = "SELECT * FROM para_cekme_talepleri WHERE id = ? AND durum = 'beklemede'";

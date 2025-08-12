@@ -261,6 +261,48 @@ try {
             ]);
             break;
 
+        case 'cancel':
+            // Para çekme talebini iptal et
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new Exception('Sadece POST metoduna izin verilir');
+            }
+
+            $withdrawal_id = $_POST['withdrawal_id'] ?? 0;
+
+            if (!$withdrawal_id) {
+                throw new Exception('Talep ID gereklidir');
+            }
+
+            // Kullanıcının beklemede olan talebini kontrol et
+            $stmt = $pdo->prepare("
+                SELECT * FROM para_cekme_talepleri 
+                WHERE id = ? AND user_id = ? AND durum = 'beklemede'
+            ");
+            $stmt->execute([$withdrawal_id, $user_id]);
+            $withdrawal = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$withdrawal) {
+                throw new Exception('İptal edilebilir talep bulunamadı. Sadece beklemede olan talepler iptal edilebilir.');
+            }
+
+            // Talebi iptal et (sil)
+            $stmt = $pdo->prepare("DELETE FROM para_cekme_talepleri WHERE id = ? AND user_id = ?");
+            $result = $stmt->execute([$withdrawal_id, $user_id]);
+
+            if ($result) {
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Para çekme talebi başarıyla iptal edildi',
+                    'data' => [
+                        'cancelled_amount' => floatval($withdrawal['tutar']),
+                        'cancelled_method' => $withdrawal['yontem']
+                    ]
+                ]);
+            } else {
+                throw new Exception('Talep iptal edilemedi');
+            }
+            break;
+
         default:
             throw new Exception('Geçersiz işlem');
     }
