@@ -3506,8 +3506,9 @@
             const coinSymbol = document.getElementById('coin-symbol').value.trim().toUpperCase();
             const coingeckoId = document.getElementById('coingecko-id').value.trim();
             const coinPrice = parseFloat(document.getElementById('coin-price').value);
-            const coinCategory = document.getElementById('coin-category').value;
             const coinLogo = document.getElementById('coin-logo').files[0];
+
+            console.log('Form verileri:', { coinName, coinSymbol, coinPrice, coingeckoId, coinLogo });
 
             if (!coinName || !coinSymbol || !coinPrice) {
                 showNotification('Lütfen tüm zorunlu alanları doldurun!', 'error');
@@ -3534,15 +3535,15 @@
             }
 
             try {
+                console.log('API çağrısı başlatılıyor...');
+                
                 const formData = new FormData();
                 formData.append('coin_adi', coinName);
                 formData.append('coin_kodu', coinSymbol);
                 formData.append('current_price', coinPrice);
+                
                 if (coingeckoId) {
                     formData.append('coingecko_id', coingeckoId);
-                }
-                if (coinCategory) {
-                    formData.append('kategori_id', coinCategory);
                 }
                 if (coinLogo) {
                     formData.append('coin_logo', coinLogo);
@@ -3553,7 +3554,21 @@
                     body: formData
                 });
 
-                const data = await response.json();
+                console.log('API yanıtı alındı:', response.status);
+                
+                const responseText = await response.text();
+                console.log('Raw response:', responseText);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('JSON parse hatası:', parseError);
+                    console.error('Response text:', responseText);
+                    throw new Error('Sunucudan geçersiz yanıt alındı');
+                }
+
+                console.log('Parsed data:', data);
 
                 if (data.success) {
                     let message = `${coinSymbol} başarıyla eklendi!`;
