@@ -85,7 +85,7 @@ switch ($action) {
                     c.created_at,
                     c.updated_at
                 FROM coins c
-                WHERE c.coin_type = 'manuel'
+                WHERE c.coin_type = 'manual'
                 ORDER BY c.created_at DESC";
         
         $stmt = $conn->prepare($sql);
@@ -200,7 +200,7 @@ switch ($action) {
         try {
             // Debug: SQL sorgusunu logla - manuel coin olarak ekle
             $sql = "INSERT INTO coins (coin_adi, coin_kodu, current_price, logo_url, coin_type, is_active) 
-                    VALUES (?, ?, ?, ?, 'manuel', 1)";
+                    VALUES (?, ?, ?, ?, 'manual', 1)";
             error_log("SQL Query: " . $sql);
             error_log("Parameters: " . json_encode([$coin_adi, $coin_kodu, $current_price_to_save, $logo_path]));
             
