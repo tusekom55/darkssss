@@ -1728,18 +1728,36 @@
         // Load invoices
         async function loadInvoices() {
             try {
-                const response = await fetch('backend/admin/test_api.php?action=invoices');
+                // Önce gerçek invoice API'sini dene
+                const response = await fetch('backend/admin/invoice.php?action=list');
                 const data = await response.json();
                 
                 if (data.success) {
-                    invoices = data.data;
+                    invoices = data.data || data.invoices || [];
                     displayInvoices(invoices);
+                    console.log('✅ Faturalar backend API\'den yüklendi');
                 } else {
-                    throw new Error(data.error || 'Faturalar yüklenemedi');
+                    throw new Error(data.error || 'Faturalar API\'den yüklenemedi');
                 }
             } catch (error) {
                 console.error('Faturalar yüklenirken hata:', error);
-                // Mock data göster
+                
+                // Fallback API dene
+                try {
+                    const fallbackResponse = await fetch('backend/admin/test_api.php?action=invoices');
+                    const fallbackData = await fallbackResponse.json();
+                    
+                    if (fallbackData.success) {
+                        invoices = fallbackData.data;
+                        displayInvoices(invoices);
+                        console.log('⚠️ Faturalar fallback API\'den yüklendi');
+                        return;
+                    }
+                } catch (fallbackError) {
+                    console.error('Fallback API hatası:', fallbackError);
+                }
+                
+                // Mock data göster (son çare)
                 invoices = [
                     {
                         id: 1,
@@ -1759,6 +1777,7 @@
                     }
                 ];
                 displayInvoices(invoices);
+                console.log('⚠️ Mock fatura verileri gösteriliyor');
             }
         }
 
@@ -1767,16 +1786,33 @@
             const tbody = document.getElementById('invoices-tbody');
             tbody.innerHTML = '';
             
+            if (!invoices || invoices.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-file-invoice" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i><br>
+                            Henüz fatura oluşturulmamış
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
             invoices.forEach(invoice => {
+                const islemTipiText = invoice.islem_tipi === 'para_cekme' ? 'Para Çekme' :
+                                    invoice.islem_tipi === 'para_yatirma' ? 'Para Yatırma' :
+                                    invoice.islem_tipi === 'coin_islem' ? 'Coin İşlem' : 
+                                    invoice.islem_tipi;
+                
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${invoice.fatura_no}</td>
+                    <td><strong>${invoice.fatura_no}</strong></td>
                     <td>${invoice.username}</td>
-                    <td>${invoice.islem_tipi}</td>
+                    <td><span class="status-badge ${invoice.islem_tipi === 'para_cekme' ? 'status-rejected' : 'status-approved'}">${islemTipiText}</span></td>
                     <td>₺${parseFloat(invoice.toplam_tutar).toLocaleString()}</td>
-                    <td>${new Date(invoice.tarih).toLocaleDateString('tr-TR')}</td>
+                    <td>${new Date(invoice.tarih).toLocaleDateString('tr-TR')} ${new Date(invoice.tarih).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</td>
                     <td>
-                        <button class="action-btn btn-invoice" onclick="generateInvoice(${invoice.id})">
+                        <button class="action-btn btn-invoice" onclick="generateInvoice(${invoice.id})" title="Faturayı PDF olarak görüntüle">
                             <i class="fas fa-file-pdf"></i> Fatura Al
                         </button>
                     </td>
