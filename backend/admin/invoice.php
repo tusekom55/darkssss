@@ -126,49 +126,60 @@ try {
                 $kdv_tutari = $tutar * ($kdv_orani / 100);
                 $toplam_tutar = $tutar + $kdv_tutari;
                 
-                // Önce faturalar tablosunun var olup olmadığını kontrol et
-                $check_table_sql = "SHOW TABLES LIKE 'faturalar'";
-                $table_exists = $conn->query($check_table_sql);
+                // Basit tablo oluşturma - IF NOT EXISTS kullan
+                $create_table_sql = "CREATE TABLE IF NOT EXISTS faturalar (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    islem_tipi VARCHAR(50) NOT NULL,
+                    islem_id INT DEFAULT 0,
+                    fatura_no VARCHAR(100) NOT NULL,
+                    tutar DECIMAL(10,2) NOT NULL,
+                    kdv_orani DECIMAL(5,2) DEFAULT 18.00,
+                    kdv_tutari DECIMAL(10,2) DEFAULT 0.00,
+                    toplam_tutar DECIMAL(10,2) NOT NULL,
+                    aciklama TEXT,
+                    tarih TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )";
                 
-                if ($table_exists->num_rows == 0) {
-                    // Tablo yoksa oluştur
-                    $create_table_sql = "CREATE TABLE faturalar (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        user_id INT NOT NULL,
-                        islem_tipi VARCHAR(50) NOT NULL,
-                        islem_id INT DEFAULT 0,
-                        fatura_no VARCHAR(100) NOT NULL,
-                        tutar DECIMAL(10,2) NOT NULL,
-                        kdv_orani DECIMAL(5,2) DEFAULT 18.00,
-                        kdv_tutari DECIMAL(10,2) DEFAULT 0.00,
-                        toplam_tutar DECIMAL(10,2) NOT NULL,
-                        aciklama TEXT,
-                        tarih TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        UNIQUE KEY unique_fatura_no (fatura_no),
-                        KEY idx_user_id (user_id)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-                    
-                    $table_result = $conn->query($create_table_sql);
-                    if (!$table_result) {
-                        echo json_encode(['success' => false, 'error' => 'Tablo oluşturma hatası: ' . $conn->error, 'sql' => $create_table_sql]);
-                        break;
-                    }
-                    error_log("Faturalar tablosu oluşturuldu");
-                } else {
-                    error_log("Faturalar tablosu zaten mevcut");
+                $table_result = $conn->query($create_table_sql);
+                if (!$table_result) {
+                    echo json_encode(['success' => false, 'error' => 'Tablo oluşturma hatası: ' . $conn->error]);
+                    break;
+                }
+                error_log("Faturalar tablosu kontrol edildi/oluşturuldu");
+                
+                // Test: tablonun gerçekten var olup olmadığını kontrol et
+                $test_table = $conn->query("DESCRIBE faturalar");
+                if (!$test_table) {
+                    echo json_encode(['success' => false, 'error' => 'Tablo oluşturulamadı: ' . $conn->error]);
+                    break;
                 }
                 
-                // Faturayı veritabanına kaydet - parametre türlerini düzelt
+                // Basit insert query ile dene
                 $sql = "INSERT INTO faturalar (user_id, islem_tipi, islem_id, fatura_no, tutar, kdv_orani, kdv_tutari, toplam_tutar, aciklama) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $conn->prepare($sql);
                 
                 if (!$stmt) {
-                    echo json_encode(['success' => false, 'error' => 'Insert prepare hatası: ' . $conn->error, 'sql' => $sql]);
+                    // Prepare başarısız, tabloya bakma şansımız var mı?
+                    $columns_result = $conn->query("SHOW COLUMNS FROM faturalar");
+                    $columns = [];
+                    if ($columns_result) {
+                        while ($col = $columns_result->fetch_assoc()) {
+                            $columns[] = $col['Field'];
+                        }
+                    }
+                    
+                    echo json_encode([
+                        'success' => false, 
+                        'error' => 'Insert prepare hatası: ' . $conn->error, 
+                        'sql' => $sql,
+                        'table_columns' => $columns,
+                        'mysql_version' => $conn->server_info
+                    ]);
                     break;
                 }
                 
-                // Parametre türlerini düzelt: i=integer, s=string, d=double
-                // user_id(i), islem_tipi(s), islem_id(i), fatura_no(s), tutar(d), kdv_orani(d), kdv_tutari(d), toplam_tutar(d), aciklama(s)
+                // Parametre türlerini düzelt
                 $stmt->bind_param('isisddds', $user_id, $islem_tipi, $islem_id, $fatura_no, $tutar, $kdv_orani, $kdv_tutari, $toplam_tutar, $aciklama);
                 
                 if ($stmt->execute()) {

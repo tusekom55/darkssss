@@ -95,6 +95,46 @@ switch ($action) {
             $stmt = $pdo->prepare($sql);
             $stmt->execute([$withdrawal['tutar'], $withdrawal['user_id']]);
             
+            // Faturalar tablosunu oluştur (yoksa)
+            $create_table_sql = "CREATE TABLE IF NOT EXISTS faturalar (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                islem_tipi VARCHAR(50) NOT NULL,
+                islem_id INT DEFAULT 0,
+                fatura_no VARCHAR(100) NOT NULL,
+                tutar DECIMAL(10,2) NOT NULL,
+                kdv_orani DECIMAL(5,2) DEFAULT 18.00,
+                kdv_tutari DECIMAL(10,2) DEFAULT 0.00,
+                toplam_tutar DECIMAL(10,2) NOT NULL,
+                aciklama TEXT,
+                tarih TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )";
+            $pdo->exec($create_table_sql);
+            
+            // Otomatik fatura oluştur
+            $fatura_no = 'FTR-' . date('Ymd') . '-' . str_pad($withdrawal['user_id'], 4, '0', STR_PAD_LEFT) . '-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
+            $kdv_orani = 18;
+            $kdv_tutari = $withdrawal['tutar'] * ($kdv_orani / 100);
+            $toplam_tutar = $withdrawal['tutar'] + $kdv_tutari;
+            $fatura_aciklama = "Para çekme işlemi - {$withdrawal['yontem']} - {$withdrawal['iban']}";
+            
+            $sql = "INSERT INTO faturalar (user_id, islem_tipi, islem_id, fatura_no, tutar, kdv_orani, kdv_tutari, toplam_tutar, aciklama) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $withdrawal['user_id'],
+                'para_cekme',
+                $withdrawal_id,
+                $fatura_no,
+                $withdrawal['tutar'],
+                $kdv_orani,
+                $kdv_tutari,
+                $toplam_tutar,
+                $fatura_aciklama
+            ]);
+            
+            $fatura_id = $pdo->lastInsertId();
+            
             // İşlem geçmişine ekle (opsiyonel tablo)
             try {
                 $sql = "INSERT INTO kullanici_islem_gecmisi 
@@ -103,7 +143,7 @@ switch ($action) {
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([
                     $withdrawal['user_id'],
-                    "Para çekme onaylandı - {$withdrawal['yontem']}",
+                    "Para çekme onaylandı - {$withdrawal['yontem']} - Fatura: {$fatura_no}",
                     $withdrawal['tutar'],
                     $user_balance,
                     $user_balance - $withdrawal['tutar']
@@ -113,7 +153,12 @@ switch ($action) {
             }
             
             $pdo->commit();
-            echo json_encode(['success' => true, 'message' => 'Para çekme talebi onaylandı']);
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Para çekme talebi onaylandı ve fatura oluşturuldu',
+                'fatura_id' => $fatura_id,
+                'fatura_no' => $fatura_no
+            ]);
             
         } catch (Exception $e) {
             $pdo->rollback();
