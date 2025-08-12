@@ -2368,16 +2368,21 @@
                 if (data.success) {
                     showNotification('Para çekme talebi onaylandı!', 'success');
                     
-                    // Fatura oluştur seçeneği sun
-                    if (confirm('Onaylanan işlem için fatura oluşturmak ister misiniz?')) {
-                        const withdrawal = withdrawals.find(w => w.id == withdrawalId);
-                        if (withdrawal) {
+                    // Otomatik fatura oluştur
+                    const withdrawal = withdrawals.find(w => w.id == withdrawalId);
+                    if (withdrawal) {
+                        try {
                             await createInvoiceForWithdrawal(withdrawal.user_id, withdrawalId, withdrawal.tutar);
+                            showNotification('Fatura otomatik olarak oluşturuldu!', 'success');
+                        } catch (error) {
+                            console.error('Fatura oluşturma hatası:', error);
+                            showNotification('Para çekme onaylandı ancak fatura oluşturulamadı: ' + error.message, 'error');
                         }
                     }
                     
                     loadWithdrawals();
                     loadDashboard();
+                    loadInvoices(); // Fatura listesini de yenile
                 } else {
                     showNotification('Hata: ' + data.error, 'error');
                 }

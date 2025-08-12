@@ -151,6 +151,31 @@ try {
             }
             break;
             
+        case 'list':
+            // Faturalar listesi
+            try {
+                global $conn;
+                
+                $sql = "SELECT f.*, u.username 
+                        FROM faturalar f 
+                        JOIN users u ON f.user_id = u.id 
+                        ORDER BY f.tarih DESC";
+                $result = $conn->query($sql);
+                
+                $faturalar = [];
+                if ($result) {
+                    while ($row = $result->fetch_assoc()) {
+                        $faturalar[] = $row;
+                    }
+                }
+                
+                echo json_encode(['success' => true, 'data' => $faturalar]);
+                
+            } catch (Exception $e) {
+                echo json_encode(['success' => false, 'error' => 'Faturalar yüklenemedi: ' . $e->getMessage()]);
+            }
+            break;
+            
         case 'generate_pdf':
             // Fatura HTML görüntüleme
             $fatura_id = $_GET['id'] ?? 0;
