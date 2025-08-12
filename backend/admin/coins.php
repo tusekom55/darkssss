@@ -82,10 +82,8 @@ switch ($action) {
                     c.logo_url,
                     c.is_active,
                     c.created_at,
-                    c.updated_at,
-                    ck.kategori_adi
+                    c.updated_at
                 FROM coins c
-                LEFT JOIN coin_kategorileri ck ON c.kategori_id = ck.id
                 ORDER BY c.created_at DESC";
         
         $stmt = $conn->prepare($sql);
@@ -199,13 +197,13 @@ switch ($action) {
         
         try {
             // Debug: SQL sorgusunu logla
-            $sql = "INSERT INTO coins (coin_adi, coin_kodu, current_price, kategori_id, logo_url, is_active) 
-                    VALUES (?, ?, ?, ?, ?, 1)";
+            $sql = "INSERT INTO coins (coin_adi, coin_kodu, current_price, logo_url, is_active) 
+                    VALUES (?, ?, ?, ?, 1)";
             error_log("SQL Query: " . $sql);
-            error_log("Parameters: " . json_encode([$coin_adi, $coin_kodu, $current_price_to_save, $kategori_id, $logo_path]));
+            error_log("Parameters: " . json_encode([$coin_adi, $coin_kodu, $current_price_to_save, $logo_path]));
             
             $stmt = $conn->prepare($sql);
-            $result = $stmt->execute([$coin_adi, $coin_kodu, $current_price_to_save, $kategori_id, $logo_path]);
+            $result = $stmt->execute([$coin_adi, $coin_kodu, $current_price_to_save, $logo_path]);
             
             if ($result) {
                 $coin_id = $conn->lastInsertId();
@@ -309,8 +307,6 @@ switch ($action) {
         $coin_adi = $_POST['coin_adi'] ?? '';
         $coin_kodu = strtoupper($_POST['coin_kodu'] ?? '');
         $current_price = floatval($_POST['current_price'] ?? 0);
-        $aciklama = $_POST['aciklama'] ?? '';
-        $kategori_id = $_POST['kategori_id'] ?? null;
         
         if ($id <= 0 || empty($coin_adi) || empty($coin_kodu) || $current_price <= 0) {
             echo json_encode(['error' => 'Tüm gerekli alanları doldurunuz']);
@@ -321,13 +317,11 @@ switch ($action) {
             $sql = "UPDATE coins SET 
                         coin_adi = ?, 
                         coin_kodu = ?, 
-                        current_price = ?, 
-                        aciklama = ?, 
-                        kategori_id = ?,
+                        current_price = ?,
                         updated_at = NOW()
                     WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $result = $stmt->execute([$coin_adi, $coin_kodu, $current_price, $aciklama, $kategori_id, $id]);
+            $result = $stmt->execute([$coin_adi, $coin_kodu, $current_price, $id]);
             
             if ($result) {
                 // Admin log kaydı
@@ -360,13 +354,11 @@ switch ($action) {
         }
         
         $sql = "SELECT 
-                    c.*, 
-                    ck.kategori_adi,
+                    c.*,
                     COUNT(ci.id) as islem_sayisi,
                     SUM(CASE WHEN ci.islem = 'al' THEN ci.miktar ELSE 0 END) as toplam_alim,
                     SUM(CASE WHEN ci.islem = 'sat' THEN ci.miktar ELSE 0 END) as toplam_satim
                 FROM coins c
-                LEFT JOIN coin_kategorileri ck ON c.kategori_id = ck.id
                 LEFT JOIN coin_islemleri ci ON c.id = ci.coin_id
                 WHERE c.id = ?
                 GROUP BY c.id";
