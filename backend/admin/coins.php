@@ -373,9 +373,96 @@ switch ($action) {
         
         echo json_encode(['success' => true, 'data' => $coin]);
         break;
+
+    case 'update':
+        $id = intval($_POST['id'] ?? 0);
+        $coin_adi = trim($_POST['coin_adi'] ?? '');
+        $coin_kodu = strtoupper(trim($_POST['coin_kodu'] ?? ''));
+        $current_price = floatval($_POST['current_price'] ?? 0);
+        $is_active = intval($_POST['is_active'] ?? 1);
+        
+        // Validasyon
+        if (!$id) {
+            echo json_encode(['success' => false, 'error' => 'Geçersiz coin ID']);
+            exit;
+        }
+        
+        if (empty($coin_adi) || empty($coin_kodu)) {
+            echo json_encode(['success' => false, 'error' => 'Coin adı ve kodu gerekli']);
+            exit;
+        }
+        
+        if ($current_price <= 0) {
+            echo json_encode(['success' => false, 'error' => 'Geçerli bir fiyat girin']);
+            exit;
+        }
+        
+        if (strlen($coin_kodu) > 10) {
+            echo json_encode(['success' => false, 'error' => 'Coin kodu 10 karakterden uzun olamaz']);
+            exit;
+        }
+        
+        if (!preg_match('/^[A-Z0-9]+$/', $coin_kodu)) {
+            echo json_encode(['success' => false, 'error' => 'Coin kodu sadece büyük harf ve rakam içerebilir']);
+            exit;
+        }
+        
+        try {
+            // Mevcut coin'i al
+            $sql = "SELECT * FROM coins WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$id]);
+            $existing_coin = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$existing_coin) {
+                echo json_encode(['success' => false, 'error' => 'Coin bulunamadı']);
+                exit;
+            }
+            
+            // Coin kodu benzersizlik kontrolü (kendisi hariç)
+            $sql = "SELECT COUNT(*) FROM coins WHERE coin_kodu = ? AND id != ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$coin_kodu, $id]);
+            
+            if ($stmt->fetchColumn() > 0) {
+                echo json_encode(['success' => false, 'error' => 'Bu coin kodu başka bir coin tarafından kullanılıyor']);
+                exit;
+            }
+            
+            // Coin'i güncelle
+            $sql = "UPDATE coins SET 
+                        coin_adi = ?, 
+                        coin_kodu = ?, 
+                        current_price = ?, 
+                        is_active = ?,
+                        updated_at = NOW() 
+                    WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $result = $stmt->execute([$coin_adi, $coin_kodu, $current_price, $is_active, $id]);
+            
+            if ($result) {
+                echo json_encode([
+                    'success' => true,
+                    'message' => $coin_adi . ' (' . $coin_kodu . ') başarıyla güncellendi',
+                    'data' => [
+                        'id' => $id,
+                        'coin_adi' => $coin_adi,
+                        'coin_kodu' => $coin_kodu,
+                        'current_price' => $current_price,
+                        'is_active' => $is_active
+                    ]
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Coin güncellenemedi']);
+            }
+            
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => 'Veritabanı hatası: ' . $e->getMessage()]);
+        }
+        break;
         
     default:
-        echo json_encode(['error' => 'Geçersiz işlem']);
+        echo json_encode(['success' => false, 'error' => 'Geçersiz işlem']);
         break;
 }
 ?>

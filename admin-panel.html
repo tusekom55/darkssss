@@ -2627,6 +2627,68 @@
             });
         }
 
+        // Update coin
+        async function updateCoin(coinId) {
+            const coinName = document.getElementById('edit-coin-name').value.trim();
+            const coinSymbol = document.getElementById('edit-coin-symbol').value.trim().toUpperCase();
+            const coinPrice = parseFloat(document.getElementById('edit-coin-price').value);
+            const coinStatus = document.getElementById('edit-coin-status').value;
+
+            if (!coinName || !coinSymbol || !coinPrice) {
+                showNotification('Lütfen tüm alanları doldurun!', 'error');
+                return;
+            }
+
+            if (coinPrice <= 0) {
+                showNotification('Coin fiyatı 0\'dan büyük olmalıdır!', 'error');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('id', coinId);
+                formData.append('coin_adi', coinName);
+                formData.append('coin_kodu', coinSymbol);
+                formData.append('current_price', coinPrice);
+                formData.append('is_active', coinStatus);
+
+                const response = await fetch('backend/admin/coins.php?action=update', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification(`${coinSymbol} başarıyla güncellendi!`, 'success');
+                    
+                    // Modal'ı kapat
+                    const modals = document.querySelectorAll('.modal');
+                    modals.forEach(modal => modal.remove());
+                    
+                    // Coin listesini yenile
+                    loadCoins();
+                } else {
+                    showNotification('Hata: ' + (data.error || 'Coin güncellenemedi'), 'error');
+                }
+            } catch (error) {
+                console.error('Coin güncelleme hatası:', error);
+                showNotification('Coin güncellenirken hata oluştu: ' + error.message, 'error');
+            }
+        }
+
+        // Reset edit form
+        function resetEditForm(coinId) {
+            const coin = coins.find(c => c.id == coinId);
+            if (coin) {
+                document.getElementById('edit-coin-name').value = coin.coin_adi;
+                document.getElementById('edit-coin-symbol').value = coin.coin_kodu;
+                document.getElementById('edit-coin-price').value = coin.current_price || 0;
+                document.getElementById('edit-coin-status').value = coin.is_active ? '1' : '0';
+                showNotification('Form sıfırlandı!', 'info');
+            }
+        }
+
         // Import settings
         function importSettings() {
             const fileInput = document.getElementById('import-file');
@@ -3677,8 +3739,74 @@
                 showNotification('Coin bulunamadı!', 'error');
                 return;
             }
+
+            // Create and show edit modal
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-edit"></i> Coin Düzenle - ${coin.coin_adi}</h3>
+                        <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+                    </div>
+                    <div style="padding: 20px;">
+                        <form id="edit-coin-form">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                                <div class="form-group">
+                                    <label class="form-label">Coin Adı: *</label>
+                                    <input type="text" id="edit-coin-name" class="form-input" 
+                                           value="${coin.coin_adi}" maxlength="100" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Coin Kodu: *</label>
+                                    <input type="text" id="edit-coin-symbol" class="form-input" 
+                                           value="${coin.coin_kodu}" maxlength="10" style="text-transform: uppercase;" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Güncel Fiyat (₺): *</label>
+                                    <input type="number" id="edit-coin-price" class="form-input" 
+                                           value="${coin.current_price || 0}" step="0.01" min="0.01" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Durum:</label>
+                                    <select id="edit-coin-status" class="form-select">
+                                        <option value="1" ${coin.is_active ? 'selected' : ''}>Aktif</option>
+                                        <option value="0" ${!coin.is_active ? 'selected' : ''}>Pasif</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button type="submit" class="btn-primary">
+                                    <i class="fas fa-save"></i> Değişiklikleri Kaydet
+                                </button>
+                                <button type="button" class="action-btn btn-warning" onclick="resetEditForm(${coinId})">
+                                    <i class="fas fa-undo"></i> Sıfırla
+                                </button>
+                                <button type="button" class="action-btn btn-reject" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                                    <i class="fas fa-times"></i> İptal
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
             
-            showNotification('Coin düzenleme özelliği yakında eklenecek!', 'info');
+            document.body.appendChild(modal);
+            
+            // Form submit event
+            document.getElementById('edit-coin-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await updateCoin(coinId);
+            });
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
         }
 
         // Delete coin
