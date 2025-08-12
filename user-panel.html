@@ -2506,10 +2506,42 @@
             }
         }
         
-        // Para çekme yakında gelecek uyarısı
+        // Para çekme sayfasına yönlendir
         function showWithdrawalComingSoon() {
             closeBalanceMenu();
-            showNotification('Para çekme özelliği yakında gelecek!', 'info');
+            navigateToWithdrawal();
+        }
+        
+        // Para çekme sayfasına yönlendir
+        function navigateToWithdrawal() {
+            // Sol menüdeki "Para Çek" linkini aktif et
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.dataset.section === 'withdrawal') {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Withdrawal bölümünü göster
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById('withdrawal').classList.add('active');
+            
+            // Sayfa başlığını güncelle
+            document.getElementById('pageTitle').textContent = 'Para Çek';
+            
+            // Para çekme taleplerini yükle
+            if (typeof loadRecentWithdrawals === 'function') {
+                loadRecentWithdrawals();
+            }
+            
+            // Mevcut bakiyeyi güncelle
+            if (typeof updateCurrentBalance === 'function') {
+                updateCurrentBalance();
+            }
         }
 
         // Notification göster
