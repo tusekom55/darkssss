@@ -1,140 +1,159 @@
 <?php
-// Para çekme talepleri API test dosyası
-header('Content-Type: text/html; charset=utf-8');
+// Para çekme talepleri API debug testi
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-echo "<h2>Para Çekme Talepleri API Test</h2>";
-echo "<pre>";
+echo "<h2>Para Çekme Talepleri API Debug</h2>\n";
 
-// Veritabanı bağlantısını test et
+// Test 1: Primary API (withdrawals.php)
+echo "<h3>Test 1: Primary API Test</h3>\n";
+echo "<strong>URL:</strong> backend/admin/withdrawals.php?action=list<br>\n";
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, 'http://localhost/backend/admin/withdrawals.php?action=list');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HEADER, false);
+curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+$response1 = curl_exec($ch);
+$http_code1 = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+echo "<strong>HTTP Status:</strong> $http_code1<br>\n";
+echo "<strong>Response:</strong> <pre>$response1</pre><br>\n";
+
+// Test 2: Fallback API (test_api.php)
+echo "<h3>Test 2: Fallback API Test</h3>\n";
+echo "<strong>URL:</strong> backend/admin/test_api.php?action=withdrawals<br>\n";
+
+$ch2 = curl_init();
+curl_setopt($ch2, CURLOPT_URL, 'http://localhost/backend/admin/test_api.php?action=withdrawals');
+curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch2, CURLOPT_HEADER, false);
+curl_setopt($ch2, CURLOPT_TIMEOUT, 10);
+$response2 = curl_exec($ch2);
+$http_code2 = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+curl_close($ch2);
+
+echo "<strong>HTTP Status:</strong> $http_code2<br>\n";
+echo "<strong>Response:</strong> <pre>$response2</pre><br>\n";
+
+// Test 3: Direct Database Query
+echo "<h3>Test 3: Direct Database Query</h3>\n";
 try {
     require_once 'backend/config.php';
-    echo "✅ Veritabanı bağlantısı başarılı\n\n";
     
-    // Para çekme talepleri tablosunu kontrol et
-    echo "📋 Para çekme talepleri tablosu kontrolü:\n";
-    $sql = "SHOW TABLES LIKE 'para_cekme_talepleri'";
-    $stmt = $conn->prepare($sql);
-    $stmt->execute();
-    $tableExists = $stmt->fetch();
+    echo "<strong>Database Connection:</strong> ";
+    $conn = db_connect();
+    echo "✅ Success<br>\n";
     
-    if ($tableExists) {
-        echo "✅ para_cekme_talepleri tablosu mevcut\n";
+    echo "<strong>Table Check:</strong> ";
+    $check_sql = "SHOW TABLES LIKE 'para_cekme_talepleri'";
+    $check_stmt = $conn->prepare($check_sql);
+    $check_stmt->execute();
+    $table_exists = $check_stmt->fetchColumn();
+    
+    if ($table_exists) {
+        echo "✅ Table exists<br>\n";
         
-        // Tablo yapısını kontrol et
-        echo "\n📊 Tablo yapısı:\n";
-        $sql = "DESCRIBE para_cekme_talepleri";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // Count records
+        $count_sql = "SELECT COUNT(*) FROM para_cekme_talepleri";
+        $count_stmt = $conn->prepare($count_sql);
+        $count_stmt->execute();
+        $count = $count_stmt->fetchColumn();
+        echo "<strong>Record Count:</strong> $count<br>\n";
         
-        foreach ($columns as $column) {
-            echo "  - {$column['Field']} ({$column['Type']})\n";
+        // Table structure
+        $desc_sql = "DESCRIBE para_cekme_talepleri";
+        $desc_stmt = $conn->prepare($desc_sql);
+        $desc_stmt->execute();
+        $columns = $desc_stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        echo "<strong>Table Structure:</strong><br>\n";
+        echo "<table border='1' cellpadding='5' cellspacing='0'>\n";
+        echo "<tr><th>Field</th><th>Type</th><th>Null</th><th>Key</th><th>Default</th></tr>\n";
+        foreach ($columns as $col) {
+            echo "<tr>\n";
+            echo "<td>{$col['Field']}</td>\n";
+            echo "<td>{$col['Type']}</td>\n";
+            echo "<td>{$col['Null']}</td>\n";
+            echo "<td>{$col['Key']}</td>\n";
+            echo "<td>{$col['Default']}</td>\n";
+            echo "</tr>\n";
         }
+        echo "</table><br>\n";
         
-        // Verileri listele
-        echo "\n📋 Mevcut veriler:\n";
-        $sql = "SELECT COUNT(*) as toplam FROM para_cekme_talepleri";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $count = $stmt->fetchColumn();
-        
-        echo "  Toplam kayıt sayısı: {$count}\n\n";
-        
+        // Sample data
         if ($count > 0) {
-            $sql = "SELECT 
-                        pct.id, pct.user_id, pct.yontem, pct.tutar, 
-                        pct.iban, pct.hesap_sahibi, pct.durum, pct.tarih,
-                        u.username
-                    FROM para_cekme_talepleri pct
-                    LEFT JOIN users u ON pct.user_id = u.id
-                    ORDER BY pct.tarih DESC";
-            $stmt = $conn->prepare($sql);
-            $stmt->execute();
-            $withdrawals = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo "<strong>Sample Data:</strong><br>\n";
+            $sample_sql = "SELECT 
+                            pct.*, 
+                            u.username, u.email
+                        FROM para_cekme_talepleri pct
+                        JOIN users u ON pct.user_id = u.id
+                        ORDER BY pct.tarih DESC
+                        LIMIT 3";
+            $sample_stmt = $conn->prepare($sample_sql);
+            $sample_stmt->execute();
+            $samples = $sample_stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            foreach ($withdrawals as $withdrawal) {
-                echo "  ID: {$withdrawal['id']}\n";
-                echo "  Kullanıcı: {$withdrawal['username']} (ID: {$withdrawal['user_id']})\n";
-                echo "  Yöntem: {$withdrawal['yontem']}\n";
-                echo "  Tutar: ₺{$withdrawal['tutar']}\n";
-                echo "  IBAN: {$withdrawal['iban']}\n";
-                echo "  Hesap Sahibi: {$withdrawal['hesap_sahibi']}\n";
-                echo "  Durum: {$withdrawal['durum']}\n";
-                echo "  Tarih: {$withdrawal['tarih']}\n";
-                echo "  ---\n";
-            }
-        }
-        
-        // Admin API'sini test et
-        echo "\n🔗 Admin API testi:\n";
-        echo "API URL: backend/admin/withdrawals.php?action=list\n";
-        
-        // API'yi çağır
-        $apiUrl = 'http://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/backend/admin/withdrawals.php?action=list';
-        
-        $context = stream_context_create([
-            'http' => [
-                'method' => 'GET',
-                'header' => 'Content-Type: application/json',
-                'timeout' => 10
-            ]
-        ]);
-        
-        $apiResponse = @file_get_contents($apiUrl, false, $context);
-        
-        if ($apiResponse !== false) {
-            echo "✅ API yanıtı alındı\n";
-            $apiData = json_decode($apiResponse, true);
-            
-            if ($apiData && isset($apiData['success'])) {
-                if ($apiData['success']) {
-                    echo "✅ API başarılı - " . count($apiData['data']) . " kayıt döndü\n";
-                    echo "API Yanıtı:\n" . json_encode($apiData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n";
-                } else {
-                    echo "❌ API hatası: " . ($apiData['error'] ?? 'Bilinmeyen hata') . "\n";
+            echo "<table border='1' cellpadding='5' cellspacing='0'>\n";
+            if (!empty($samples)) {
+                // Header
+                echo "<tr>";
+                foreach (array_keys($samples[0]) as $key) {
+                    echo "<th>$key</th>";
                 }
-            } else {
-                echo "❌ API yanıtı geçersiz format\n";
-                echo "Ham yanıt: " . $apiResponse . "\n";
+                echo "</tr>\n";
+                
+                // Data
+                foreach ($samples as $row) {
+                    echo "<tr>";
+                    foreach ($row as $value) {
+                        echo "<td>" . htmlspecialchars($value ?? 'NULL') . "</td>";
+                    }
+                    echo "</tr>\n";
+                }
             }
-        } else {
-            echo "❌ API'ye erişim hatası\n";
-            echo "HTTP hata detayları: " . print_r(error_get_last(), true) . "\n";
-        }
-        
-        // Users tablosunu kontrol et
-        echo "\n👥 Users tablosu kontrolü:\n";
-        $sql = "SELECT id, username, role, balance FROM users WHERE role = 'user' LIMIT 3";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        foreach ($users as $user) {
-            echo "  ID: {$user['id']}, Username: {$user['username']}, Balance: ₺{$user['balance']}\n";
+            echo "</table><br>\n";
         }
         
     } else {
-        echo "❌ para_cekme_talepleri tablosu bulunamadı\n";
-        echo "fix_withdrawal_table.sql dosyasını veritabanında çalıştırın!\n";
+        echo "❌ Table does NOT exist<br>\n";
     }
     
 } catch (Exception $e) {
-    echo "❌ Hata: " . $e->getMessage() . "\n";
-    echo "Dosya: " . $e->getFile() . "\n";
-    echo "Satır: " . $e->getLine() . "\n";
+    echo "❌ Database Error: " . $e->getMessage() . "<br>\n";
 }
 
-echo "</pre>";
+// Test 4: API Simulation
+echo "<h3>Test 4: Manual API Simulation</h3>\n";
+try {
+    $manual_sql = "SELECT 
+                    pct.*, 
+                    u.username, u.email, u.telefon, u.ad_soyad,
+                    a.username as admin_username
+                FROM para_cekme_talepleri pct
+                JOIN users u ON pct.user_id = u.id
+                LEFT JOIN users a ON pct.onaylayan_admin_id = a.id
+                ORDER BY pct.tarih DESC";
+    
+    $manual_stmt = $conn->prepare($manual_sql);
+    $manual_stmt->execute();
+    $manual_result = $manual_stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo "<strong>Manual Query Result:</strong><br>\n";
+    echo "<strong>Count:</strong> " . count($manual_result) . "<br>\n";
+    echo "<strong>JSON:</strong> <pre>" . json_encode($manual_result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "</pre><br>\n";
+    
+} catch (Exception $e) {
+    echo "❌ Manual Query Error: " . $e->getMessage() . "<br>\n";
+}
 
-echo "<hr>";
-echo "<h3>Çözüm Adımları:</h3>";
-echo "<ol>";
-echo "<li><strong>fix_withdrawal_table.sql</strong> dosyasını hosting panelindeki veritabanında çalıştırın</li>";
-echo "<li>Admin paneli açın ve Para Çekme Talepleri bölümüne gidin</li>";
-echo "<li>Eğer hala görünmüyorsa, tarayıcı konsolunda hata olup olmadığını kontrol edin</li>";
-echo "<li>API testi bu sayfada ✅ işareti gösteriyorsa sorun frontend'de olabilir</li>";
-echo "</ol>";
-
-echo "<p><a href='admin-panel.html' target='_blank'>Admin Paneli Aç</a> | ";
-echo "<a href='backend/admin/withdrawals.php?action=list' target='_blank'>API'yi Doğrudan Test Et</a></p>";
+echo "<hr><h3>Sonuç ve Öneriler:</h3>\n";
+echo "<ul>\n";
+echo "<li>Primary API çalışıyor mu? " . ($http_code1 == 200 ? "✅" : "❌") . "</li>\n";
+echo "<li>Fallback API çalışıyor mu? " . ($http_code2 == 200 ? "✅" : "❌") . "</li>\n";
+echo "<li>Database'de veri var mı? " . (isset($count) && $count > 0 ? "✅" : "❌") . "</li>\n";
+echo "<li>Manual query çalışıyor mu? " . (isset($manual_result) && count($manual_result) > 0 ? "✅" : "❌") . "</li>\n";
+echo "</ul>\n";
 ?>
