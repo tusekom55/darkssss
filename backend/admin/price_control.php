@@ -139,17 +139,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     exit;
                 }
                 
-                // Yeni manual coin ekle
-                $sql = "INSERT INTO coins (coin_adi, coin_kodu, current_price, coin_type, price_source, is_active, created_at) 
-                        VALUES (?, ?, ?, 'manual', 'manual', 1, NOW())";
+                // Logo upload işlemi
+                $logo_path = null;
+                if (isset($_FILES['coin_logo']) && $_FILES['coin_logo']['error'] === UPLOAD_ERR_OK) {
+                    $upload_dir = '../coin_logos/';
+                    
+                    // Dizin yoksa oluştur
+                    if (!is_dir($upload_dir)) {
+                        mkdir($upload_dir, 0755, true);
+                    }
+                    
+                    $file_extension = strtolower(pathinfo($_FILES['coin_logo']['name'], PATHINFO_EXTENSION));
+                    $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'];
+                    
+                    if (in_array($file_extension, $allowed_extensions)) {
+                        $logo_filename = $coin_code . '_logo.' . $file_extension;
+                        $logo_path = $upload_dir . $logo_filename;
+                        
+                        if (move_uploaded_file($_FILES['coin_logo']['tmp_name'], $logo_path)) {
+                            $logo_path = 'coin_logos/' . $logo_filename; // Relative path for database
+                        } else {
+                            $logo_path = null;
+                        }
+                    }
+                }
+                
+                // Yeni manual coin ekle (logo ile)
+                $sql = "INSERT INTO coins (coin_adi, coin_kodu, current_price, coin_type, price_source, logo_url, is_active, created_at) 
+                        VALUES (?, ?, ?, 'manual', 'manual', ?, 1, NOW())";
                 $stmt = $conn->prepare($sql);
-                $result = $stmt->execute([$coin_name, $coin_code, $initial_price]);
+                $result = $stmt->execute([$coin_name, $coin_code, $initial_price, $logo_path]);
                 
                 if ($result) {
                     // PriceManager'ın manuel coin listesini güncelle
                     $priceManager->addManualCoin($coin_code);
                     
-                    echo json_encode([
+                    $response_data = [
                         'success' => true,
                         'message' => $coin_name . ' (' . $coin_code . ') başarıyla eklendi',
                         'data' => [
@@ -157,7 +182,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'coin_code' => $coin_code,
                             'initial_price' => $initial_price
                         ]
-                    ]);
+                    ];
+                    
+                    if ($logo_path) {
+                        $response_data['data']['logo_path'] = $logo_path;
+                        $response_data['message'] .= ' (Logo yüklendi)';
+                    }
+                    
+                    echo json_encode($response_data);
                 } else {
                     echo json_encode(['success' => false, 'error' => 'Coin eklenemedi']);
                 }

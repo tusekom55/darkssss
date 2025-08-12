@@ -1177,6 +1177,12 @@
                                    step="0.01" min="0.01" placeholder="Örn: 100.00">
                             <small style="color: #666; font-size: 12px;">Minimum 0.01 TL</small>
                         </div>
+                        <div>
+                            <label class="form-label">Coin Logosu (Opsiyonel):</label>
+                            <input type="file" id="new-coin-logo" class="form-input" 
+                                   accept="image/jpeg,image/jpg,image/png,image/gif,image/svg+xml,image/webp">
+                            <small style="color: #666; font-size: 12px;">JPG, PNG, GIF, SVG, WebP - Max 2MB</small>
+                        </div>
                     </div>
                     
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -4159,6 +4165,7 @@
             const coinName = document.getElementById('new-coin-name').value.trim();
             const coinCode = document.getElementById('new-coin-code').value.trim().toUpperCase();
             const initialPrice = parseFloat(document.getElementById('new-coin-price').value);
+            const logoFile = document.getElementById('new-coin-logo').files[0];
             
             // Validasyon
             if (!coinName || !coinCode || !initialPrice) {
@@ -4181,11 +4188,30 @@
                 return;
             }
             
+            // Logo dosya kontrolü
+            if (logoFile) {
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml', 'image/webp'];
+                if (!allowedTypes.includes(logoFile.type)) {
+                    showNotification('Sadece JPG, PNG, GIF, SVG ve WebP dosyaları yüklenebilir!', 'error');
+                    return;
+                }
+                
+                if (logoFile.size > 2 * 1024 * 1024) { // 2MB
+                    showNotification('Logo dosyası 2MB\'dan küçük olmalıdır!', 'error');
+                    return;
+                }
+            }
+            
             try {
                 const formData = new FormData();
                 formData.append('coin_name', coinName);
                 formData.append('coin_code', coinCode);
                 formData.append('initial_price', initialPrice);
+                
+                // Logo dosyasını ekle (varsa)
+                if (logoFile) {
+                    formData.append('coin_logo', logoFile);
+                }
                 
                 const response = await fetch('backend/admin/price_control.php?action=add_manual_coin', {
                     method: 'POST',
@@ -4195,7 +4221,11 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    showNotification(`${coinName} (${coinCode}) başarıyla eklendi!`, 'success');
+                    let message = `${coinName} (${coinCode}) başarıyla eklendi!`;
+                    if (data.data && data.data.logo_path) {
+                        message += ` Logo da yüklendi.`;
+                    }
+                    showNotification(message, 'success');
                     
                     // Form alanlarını temizle
                     clearAddCoinForm();
@@ -4223,6 +4253,7 @@
             document.getElementById('new-coin-name').value = '';
             document.getElementById('new-coin-code').value = '';
             document.getElementById('new-coin-price').value = '';
+            document.getElementById('new-coin-logo').value = '';
             document.getElementById('add-coin-result').style.display = 'none';
         }
         
